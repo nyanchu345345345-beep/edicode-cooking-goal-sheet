@@ -620,33 +620,33 @@
                 <p class="text-gray-400 text-[0.65rem] font-black tracking-[0.1em]">NEXT ACTIONシート作成フォーム</p>
             </header>
 
-            <div class="mb-8">
-                <button id="open-draft-list-btn" class="hidden w-full bg-[#cb563e] hover:bg-[#b94b36] text-white py-4 rounded-2xl font-black text-sm transition flex items-center justify-center gap-2 shadow-lg">
-                    💾 保存データを確認する / 編集を再開する
-                </button>
-            </div>
-
-            <div class="mb-6">
-                <input id="draft-file" type="file" accept=".json,application/json" class="sr-only">
-                <button id="import-draft-btn" type="button" class="min-h-[44px] w-full rounded-xl border border-[#182349] px-4 py-2 font-bold text-[#182349]">下書きファイルを読み込む</button>
-            </div>
             <div class="space-y-6">
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label for="manual-username" class="block text-xs font-black text-gray-500 mb-2 uppercase tracking-widest">記入者名</label>
-                        <input type="text" id="manual-username" placeholder="名前を入力" class="w-full border-2 border-[#f3e9e1] p-4 rounded-xl focus:border-[#cb563e] outline-none font-bold">
-                    </div>
+                <div>
+                    <label for="manual-username" class="mb-2 block font-bold text-[#182349]">お名前</label>
+                    <input type="text" id="manual-username" autocomplete="name" placeholder="例：料理 花子" class="w-full rounded-xl border border-gray-200 p-4 font-bold outline-none focus:border-[#cb563e]">
+                </div>
+                <div>
+                    <label for="manual-dish" class="mb-2 block font-bold text-[#182349]">料理名<span class="ml-2 text-xs font-normal text-gray-600">必須</span></label>
+                    <input type="text" id="manual-dish" required placeholder="例：からあげ定食" class="w-full rounded-xl border border-gray-200 p-4 font-bold outline-none focus:border-[#cb563e]">
+                </div>
+
+                <button id="createBtn" type="button" disabled class="w-full rounded-2xl bg-[#cb563e] px-4 py-5 text-base font-black text-white shadow-md hover:bg-[#b94b36] disabled:cursor-default disabled:bg-gray-300">
+                    料理名を入力してください
+                </button>
+
+                <div>
+                    <label for="draft-file" class="mb-2 block text-center font-bold text-[#182349]">下書きファイルを読み込む</label>
+                    <input id="draft-file" type="file" accept=".json,application/json" class="block w-full min-w-0 text-sm text-[#182349]">
+                    <button id="open-draft-list-btn" type="button" class="mt-4 hidden min-h-[44px] w-full rounded-xl border border-[#182349] font-bold text-[#182349]">このブラウザの下書きを開く</button>
+                </div>
+
+                <details class="border-t border-gray-200 pt-4">
+                    <summary class="cursor-pointer text-sm font-bold text-[#182349]">作成オプション</summary>
+                    <div class="mt-4 space-y-4">
                     <div>
                         <label for="manual-date" class="block text-xs font-black text-gray-500 mb-2 uppercase tracking-widest">入力日</label>
                         <input type="date" id="manual-date" class="w-full border-2 border-[#f3e9e1] p-4 rounded-xl focus:border-[#cb563e] outline-none text-sm font-bold">
                     </div>
-                </div>
-
-                <div>
-                    <label for="manual-dish" class="block text-xs font-black text-gray-500 mb-2">料理名（必須）</label>
-                    <input type="text" id="manual-dish" required class="w-full border-2 border-[#f3e9e1] p-4 rounded-xl focus:border-[#cb563e] outline-none font-bold">
-                </div>
-
                 <div>
                     <label class="block text-xs font-black text-gray-500 mb-2 uppercase tracking-widest">使用モードを選択</label>
                     <div class="grid grid-cols-2 gap-4">
@@ -673,12 +673,9 @@
                     </div>
                 </div>
 
-                <p class="text-sm text-gray-600">ファイルを選ばずにシートを作成できます。</p>
-                <button id="createBtn" class="w-full bg-[#cb563e] text-white py-5 rounded-2xl font-black text-lg hover:bg-[#b94b36] shadow-xl">
-                    NEXT ACTIONシートを作成
-                </button>
-                <button type="button" id="sampleBtn" class="w-full rounded-xl border border-[#182349] py-3 font-bold text-[#182349]">サンプルで試す</button>
-                <p class="text-sm text-gray-600">入力中の内容はこのブラウザに自動保存されます。別のブラウザで再開するときは、下書きファイルを保存してください。</p>
+                        <button type="button" id="sampleBtn" class="w-full rounded-xl border border-[#182349] py-3 font-bold text-[#182349]">サンプルで試す</button>
+                    </div>
+                </details>
             </div>
         </div>
     </div>
@@ -1136,6 +1133,7 @@
             mode = d.mode || 'online';
             currentData = d.parsedData;
             document.getElementById('manual-dish').value = currentData.dish;
+            updateCreateButton();
             currentUser = d.username || '';
             currentDate = d.date || '';
             currentRawText = d.rawText || '';
@@ -1478,6 +1476,7 @@
                 return;
             }
             nameInput.value = dish;
+            updateCreateButton();
             parsedRecipe.dish = dish;
             previousInputValues = {};
             clearTimeout(saveTimer);
@@ -1499,6 +1498,14 @@
             updateSaveStatus(false);
         }
 
+        function updateCreateButton() {
+            const button = document.getElementById('createBtn');
+            const hasDish = Boolean(document.getElementById('manual-dish').value.trim());
+            button.disabled = !hasDish;
+            button.textContent = hasDish ? 'NEXT ACTIONシートを作成' : '料理名を入力してください';
+        }
+
+        document.getElementById('manual-dish').addEventListener('input', updateCreateButton);
         document.getElementById('createBtn').onclick = async () => {
             const file = document.getElementById('input-file').files[0];
             const button = document.getElementById('createBtn');
@@ -1509,8 +1516,7 @@
             } catch (error) {
                 showToast(error.message || 'ファイルを読み込めませんでした。');
             } finally {
-                button.disabled = false;
-                button.textContent = 'NEXT ACTIONシートを作成';
+                updateCreateButton();
             }
         };
 
@@ -1552,11 +1558,21 @@
             }
         };
 
-        document.getElementById('input-file').onchange = function() {
-            if(this.files[0]) {
-                const d=document.getElementById('file-display');
-                d.innerText="選択中: "+this.files[0].name;
-                d.classList.remove('hidden');
+        document.getElementById('input-file').onchange = async function() {
+            const file = this.files[0];
+            const display = document.getElementById('file-display');
+            display.textContent = file ? '選択中: ' + file.name : '';
+            display.classList.toggle('hidden', !file);
+            if (!file) return;
+            try {
+                const recipe = readRecipe(await file.text());
+                const name = document.getElementById('manual-dish');
+                if (this.files[0] === file && !name.value.trim() && recipe.dish) {
+                    name.value = recipe.dish;
+                    updateCreateButton();
+                }
+            } catch (error) {
+                showToast(error.message);
             }
         };
 
@@ -1606,7 +1622,6 @@
         };
 
         const draftFileInput = document.getElementById('draft-file');
-        document.getElementById('import-draft-btn').onclick = () => draftFileInput.click();
         draftFileInput.onchange = async () => {
             const file = draftFileInput.files[0];
             if (!file) return;
