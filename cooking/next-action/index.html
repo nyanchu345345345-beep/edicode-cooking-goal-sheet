@@ -1,0 +1,1666 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EDICODE｜NEXT ACTIONシート作成フォーム</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/html-to-image@1.11.11/dist/html-to-image.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Noto+Sans+JP:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --brand-navy: #182349;
+            --brand-orange: #cb563e;
+            --base-bg: #f8f3ef;
+        }
+
+        body {
+            font-family: 'Inter', 'Noto Sans JP', sans-serif;
+            background-color: var(--base-bg);
+            color: #111827;
+            overflow-x: hidden;
+        }
+
+        @media print {
+            .no-print { display: none !important; }
+        }
+
+        .a4-page {
+            background-color: white;
+            width: 210mm;
+            min-height: 297mm;
+            margin: 20px auto;
+            padding: 15mm;
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+            box-sizing: border-box;
+            position: relative;
+        }
+
+        .section-title {
+            background-color: var(--brand-orange);
+            color: white;
+            padding: 12px 20px;
+            font-weight: 900;
+            font-size: 1.2rem;
+            margin-top: 40px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .subsection-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            background: #f1f5f9;
+            border-left: 6px solid var(--brand-navy);
+            color: var(--brand-navy);
+            font-weight: 900;
+            font-size: 1rem;
+            padding: 10px 18px;
+            border-radius: 0 8px 8px 0;
+            margin-bottom: 16px;
+        }
+        .subsection-label .label-mark {
+            background: var(--brand-orange);
+            color: #ffffff;
+            font-size: 0.8rem;
+            font-weight: 900;
+            padding: 3px 12px;
+            border-radius: 999px;
+        }
+
+        .na-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; margin-bottom: 24px; table-layout: fixed; }
+        .na-table th, .na-table td { border: 1px solid #d1d5db; padding: 12px; vertical-align: top; }
+        .na-table th { background-color: #f9fafb; font-weight: 900; text-align: left; color: #1f2937; }
+        
+        .achievement-select, .adj-select {
+            width: 100%;
+            border: 1.5px solid #d8dee8;
+            border-radius: 6px;
+            padding: 8px 4px;
+            font-weight: bold;
+            font-size: 0.85rem;
+            background: white;
+        }
+
+        .box-input {
+            width: 100%;
+            border: 1.5px solid #d8dee8;
+            border-radius: 8px;
+            padding: 12px;
+            font-size: 0.88rem;
+            line-height: 1.65;
+            background-color: #ffffff;
+            transition: all 0.2s;
+            resize: none;
+            overflow: hidden;
+        }
+
+        #sheet-content textarea.box-input {
+            display: block;
+            min-height: 7rem !important;
+            resize: vertical;
+            overflow: auto;
+        }
+
+        #setup-screen input[type="text"],
+        #setup-screen input[type="date"] {
+            font-size: 16px;
+            min-width: 0;
+        }
+
+        #sheet-content .sheet-form-dish { overflow-wrap: anywhere; }
+
+        @media (max-width: 640px) {
+            #online-controls { align-items: stretch !important; }
+            #export-draft-btn { width: 100%; }
+            #sheet-content textarea.box-input { min-height: 8rem !important; }
+        }
+
+        .handwriting-box {
+            min-height: 100px;
+            border: 1.5px solid #d8dee8;
+            border-radius: 8px;
+            background-color: #ffffff;
+        }
+
+        #mobile-export-content-wrapper { position: fixed; top: 0; left: 0; width: 1000px; z-index: 999998; opacity: 1; pointer-events: none; background: #ffffff; display: none; }
+        #pdf-export-cover { position: fixed; inset: 0; z-index: 999999; background: rgba(248, 243, 239, 0.96); display: flex; align-items: center; justify-content: center; }
+        
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 10000; display: none; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
+        .modal-content { background: white; width: min(92vw, 600px); border-radius: 24px; overflow: hidden; display: flex; flex-direction: column; }
+        .toast-notify { position: fixed; top: 24px; left: 50%; transform: translateX(-50%); background: var(--brand-navy); color: white; padding: 12px 24px; border-radius: 999px; font-size: 0.85rem; font-weight: bold; z-index: 1000000; display: none; }
+
+        @media screen and (max-width: 768px) {
+            html,
+            body {
+                width: 100%;
+                max-width: 100%;
+                overflow-x: hidden;
+            }
+
+            #setup-screen {
+                padding: 24px 12px !important;
+                width: 100%;
+                max-width: 100%;
+                box-sizing: border-box;
+            }
+
+            #setup-screen > .max-w-2xl {
+                width: 100% !important;
+                max-width: calc(100vw - 24px) !important;
+                padding: 24px 18px !important;
+                border-radius: 24px !important;
+                box-sizing: border-box;
+            }
+
+            #setup-screen .grid.grid-cols-2 {
+                grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+                gap: 10px !important;
+            }
+
+            #setup-screen input[type="text"],
+            #setup-screen input[type="date"] {
+                width: 100% !important;
+                min-width: 0 !important;
+                max-width: 100% !important;
+                box-sizing: border-box !important;
+                padding: 12px 10px !important;
+                font-size: 13px !important;
+                line-height: 1.2 !important;
+            }
+
+            #manual-date {
+                appearance: none;
+                -webkit-appearance: none;
+            }
+
+            #manual-date::-webkit-date-and-time-value {
+                text-align: left;
+                min-width: 0;
+            }
+
+            #setup-screen label:has(input[name=\"usage-mode\"]) {
+                padding: 16px 8px !important;
+                min-width: 0 !important;
+                box-sizing: border-box !important;
+            }
+
+            #setup-screen label:has(input[name=\"usage-mode\"]) input {
+                width: 18px !important;
+                height: 18px !important;
+                margin-bottom: 8px !important;
+            }
+
+            #setup-screen label:has(input[name=\"usage-mode\"]) span {
+                font-size: 0.78rem !important;
+                line-height: 1.15 !important;
+                white-space: nowrap !important;
+                letter-spacing: -0.04em !important;
+            }
+
+            #setup-screen .border-dashed {
+                padding: 28px 12px !important;
+            }
+
+            #createBtn,
+            #open-draft-list-btn {
+                font-size: 0.95rem !important;
+                padding-top: 16px !important;
+                padding-bottom: 16px !important;
+            }
+
+            #output-screen {
+                width: 100%;
+                max-width: 100%;
+                overflow-x: hidden;
+            }
+
+            #output-screen .container {
+                max-width: 100% !important;
+                padding-left: 10px !important;
+                padding-right: 10px !important;
+                box-sizing: border-box;
+            }
+
+            /* スマホでは表をカード型1カラムにする */
+            .mobile-card-table,
+            .mobile-card-table thead,
+            .mobile-card-table tbody,
+            .mobile-card-table tr,
+            .mobile-card-table th,
+            .mobile-card-table td {
+                display: block !important;
+                width: 100% !important;
+                box-sizing: border-box !important;
+            }
+
+            .mobile-card-table {
+                border-collapse: separate !important;
+                border-spacing: 0 !important;
+                border: none !important;
+                font-size: 0.78rem !important;
+                margin-bottom: 20px !important;
+            }
+
+            .mobile-card-table thead {
+                display: none !important;
+            }
+
+            .mobile-card-table tr {
+                border: 1.5px solid #d8dee8 !important;
+                border-radius: 14px !important;
+                overflow: hidden !important;
+                margin-bottom: 16px !important;
+                background: #ffffff !important;
+            }
+
+            .mobile-card-table th,
+            .mobile-card-table td {
+                border: none !important;
+                border-bottom: 1px solid #e5e7eb !important;
+                padding: 12px !important;
+                line-height: 1.45 !important;
+            }
+
+            .mobile-card-table tr > *:last-child {
+                border-bottom: none !important;
+            }
+
+            /* 02-1 / 02-2：設定ゴールを読みやすく */
+            .na-table-021 td:first-child,
+            .na-table-022 td:first-child {
+                background: #f9fafb !important;
+            }
+
+            .na-table-021 td:first-child::before,
+            .na-table-022 td:first-child::before {
+                content: "設定ゴール";
+                display: block;
+                font-size: 0.65rem;
+                font-weight: 900;
+                color: #9ca3af;
+                margin-bottom: 6px;
+            }
+
+            .na-table-021 td:nth-child(2)::before,
+            .na-table-022 td:nth-child(2)::before {
+                content: "到達度・調整";
+                display: block;
+                font-size: 0.65rem;
+                font-weight: 900;
+                color: #9ca3af;
+                margin-bottom: 6px;
+            }
+
+            .na-table-021 td:nth-child(3)::before,
+            .na-table-022 td:nth-child(3)::before {
+                content: "評価理由・改善案";
+                display: block;
+                font-size: 0.65rem;
+                font-weight: 900;
+                color: #9ca3af;
+                margin-bottom: 6px;
+            }
+
+            /* 到達度の手書き選択肢を小さく */
+            .achievement-handwrite-guide,
+            .na-table-021 td:nth-child(2) > div,
+            .na-table-022 td:nth-child(2) > div {
+                font-size: 0.62rem !important;
+                line-height: 1.35 !important;
+            }
+
+            /* 03：軸ごとにカード化 */
+            .na-table-03 tr {
+                padding: 0 !important;
+            }
+
+            .na-table-03 th:first-child {
+                background: #f9fafb !important;
+                color: #182349 !important;
+                font-size: 1rem !important;
+                font-weight: 900 !important;
+                padding: 14px 12px !important;
+                border-bottom: 1.5px solid #d8dee8 !important;
+            }
+
+            .na-table-03 td::before {
+                display: block;
+                font-size: 0.72rem;
+                font-weight: 900;
+                color: #182349;
+                margin-bottom: 4px;
+            }
+
+            .na-table-03 td:nth-child(2)::before {
+                content: "活かす";
+            }
+
+            .na-table-03 td:nth-child(3)::before {
+                content: "直す";
+            }
+
+            .na-table-03 td:nth-child(4)::before {
+                content: "削ぐ";
+            }
+
+            .na-table-03 td:nth-child(5)::before {
+                content: "試したいこと";
+            }
+
+            .na-table-03 .strategy-help {
+                font-size: 0.58rem !important;
+                line-height: 1.25 !important;
+                color: #9ca3af !important;
+                margin-bottom: 6px !important;
+                height: auto !important;
+                min-height: 0 !important;
+                letter-spacing: -0.03em !important;
+            }
+
+            .na-table-03 .handwriting-box,
+            .na-table-03 .box-input {
+                min-height: 86px !important;
+                width: 100% !important;
+                padding: 8px !important;
+                border-radius: 8px !important;
+            }
+
+            .a4-page {
+                width: calc(100vw - 20px) !important;
+                max-width: calc(100vw - 20px) !important;
+                min-height: auto !important;
+                margin: 12px auto !important;
+                padding: 14px !important;
+                border-radius: 16px !important;
+                box-sizing: border-box !important;
+                overflow: hidden !important;
+            }
+
+            .section-title {
+                font-size: 0.95rem !important;
+                padding: 10px 12px !important;
+                margin-top: 24px !important;
+                margin-bottom: 14px !important;
+                border-radius: 8px !important;
+            }
+
+            .subsection-label {
+                font-size: 0.82rem !important;
+                padding: 8px 10px !important;
+                margin-bottom: 12px !important;
+            }
+
+            .box-input {
+                font-size: 16px !important;
+                line-height: 1.55 !important;
+                padding: 12px !important;
+            }
+
+            .handwriting-box {
+                min-height: 82px !important;
+            }
+
+            #online-controls {
+                width: calc(100vw - 20px) !important;
+                max-width: calc(100vw - 20px) !important;
+                padding: 14px !important;
+                box-sizing: border-box !important;
+            }
+
+            /* フォーム上部ヘッダー：スマホでは料理名をEDICODEの下に自然に配置 */
+            .sheet-form-header {
+                flex-direction: column !important;
+                align-items: flex-start !important;
+                gap: 10px !important;
+                padding-bottom: 18px !important;
+                margin-bottom: 24px !important;
+            }
+
+            .sheet-form-logo {
+                font-size: 2.45rem !important;
+                line-height: 1 !important;
+                letter-spacing: -0.05em !important;
+            }
+
+            .sheet-form-subtitle {
+                font-size: 0.58rem !important;
+                line-height: 1.2 !important;
+                letter-spacing: 0.02em !important;
+                margin-top: 4px !important;
+            }
+
+            .sheet-form-meta {
+                width: 100% !important;
+                text-align: left !important;
+                margin-top: 2px !important;
+            }
+
+            .sheet-form-dish {
+                font-size: 1rem !important;
+                line-height: 1.35 !important;
+                font-weight: 900 !important;
+                color: #182349 !important;
+                word-break: keep-all !important;
+                overflow-wrap: anywhere !important;
+                max-width: 100% !important;
+            }
+
+            .sheet-form-userdate {
+                font-size: 0.58rem !important;
+                line-height: 1.3 !important;
+                margin-top: 4px !important;
+                color: #6b7280 !important;
+            }
+
+            /* 04 AI再設計メモ：グレー見出しを小さくして改行崩れを抑える */
+            .ai-memo-label {
+                display: block !important;
+                font-size: 0.52rem !important;
+                line-height: 1.15 !important;
+                letter-spacing: -0.04em !important;
+                margin-bottom: 5px !important;
+                color: #9ca3af !important;
+                font-weight: 900 !important;
+                word-break: keep-all !important;
+                overflow-wrap: anywhere !important;
+            }
+
+            .ai-memo-grid {
+                gap: 12px !important;
+            }
+
+            .ai-memo-grid .handwriting-box,
+            .ai-memo-grid .box-input {
+                min-height: 82px !important;
+            }
+
+            /* スマホカード内の大見出しを少し大きくして、項目名として認識しやすくする */
+            .mobile-card-table td::before,
+            .mobile-card-table th::before {
+                font-size: 0.88rem !important;
+                line-height: 1.35 !important;
+                font-weight: 900 !important;
+                color: #8f98a8 !important;
+                letter-spacing: -0.02em !important;
+                margin-bottom: 8px !important;
+            }
+
+            /* 設定ゴール / 到達度・調整 / 評価理由・改善案 などのカード内ラベル */
+            .mobile-card-table .card-label,
+            .mobile-card-table .field-label,
+            .mobile-card-table .item-label,
+            .mobile-card-table label,
+            .mobile-card-table .text-gray-400 {
+                font-size: 0.84rem !important;
+                line-height: 1.35 !important;
+                font-weight: 900 !important;
+                letter-spacing: -0.02em !important;
+            }
+
+            /* 料理のゴール / らしさのゴール / コクのゴール / コントラストのゴール など、設定ゴール内の小見出し */
+            .mobile-card-table td:first-child .text-gray-400,
+            .mobile-card-table td:first-child label,
+            .mobile-card-table .goal-label,
+            .mobile-card-table .goal-title {
+                font-size: 0.88rem !important;
+                line-height: 1.35 !important;
+                font-weight: 900 !important;
+                color: #9ca3af !important;
+                margin-bottom: 8px !important;
+            }
+
+            /* 本文との差が出るように、見出し下の余白を少しだけ確保 */
+            .mobile-card-table td > label,
+            .mobile-card-table td > .text-gray-400,
+            .mobile-card-table td > .card-label,
+            .mobile-card-table td > .field-label,
+            .mobile-card-table td > .item-label {
+                display: block !important;
+                margin-bottom: 8px !important;
+            }
+
+            /* 保存済み下書き一覧モーダル：スマホで保存名を判別しやすくする */
+            #draft-modal .modal-content {
+                width: calc(100vw - 28px) !important;
+                max-width: calc(100vw - 28px) !important;
+                border-radius: 24px !important;
+            }
+
+            #draft-list-container {
+                max-height: 58vh !important;
+                overflow-y: auto !important;
+                padding: 14px !important;
+            }
+
+            #draft-list-container > div {
+                align-items: flex-start !important;
+                gap: 12px !important;
+                padding: 16px !important;
+            }
+
+            #draft-list-container .cursor-pointer {
+                width: 100% !important;
+                min-width: 0 !important;
+            }
+
+            #draft-list-container .draft-title-text {
+                font-size: 0.82rem !important;
+                line-height: 1.35 !important;
+                font-weight: 900 !important;
+                color: #182349 !important;
+                white-space: normal !important;
+                overflow: visible !important;
+                text-overflow: clip !important;
+                word-break: break-word !important;
+                overflow-wrap: anywhere !important;
+                display: block !important;
+                max-width: 100% !important;
+                margin-bottom: 4px !important;
+            }
+
+            #draft-list-container .draft-meta-text {
+                font-size: 0.68rem !important;
+                line-height: 1.35 !important;
+                white-space: normal !important;
+                overflow-wrap: anywhere !important;
+                gap: 4px 10px !important;
+            }
+
+            #draft-list-container .draft-meta-text span {
+                display: inline-flex !important;
+                max-width: 100% !important;
+                overflow-wrap: anywhere !important;
+                word-break: break-word !important;
+            }
+
+            /* 既存の truncate が残っていても、スマホでは省略を解除する */
+            #draft-list-container .truncate {
+                white-space: normal !important;
+                overflow: visible !important;
+                text-overflow: clip !important;
+                display: block !important;
+                max-width: 100% !important;
+            }
+
+            /* ゴミ箱ボタンが保存名を圧迫しすぎないようにする */
+            #draft-list-container button {
+                flex-shrink: 0 !important;
+                width: 38px !important;
+                height: 38px !important;
+            }
+        }
+
+        #pdf-save-modal {
+            z-index: 1000001 !important;
+        }
+
+        #pdf-save-modal .modal-content {
+            z-index: 1000002 !important;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="toast" class="toast-notify" role="status"></div>
+
+    <!-- SETUP SCREEN -->
+    <div id="setup-screen" class="container mx-auto px-4 py-12 no-print">
+        <div class="max-w-2xl mx-auto bg-white p-8 md:p-10 rounded-3xl shadow-2xl border border-[#eee0d5]">
+            <header class="text-center mb-10">
+                <h1 class="text-3xl font-black tracking-tighter mb-2 text-[#182349]">EDICODE</h1>
+                <p class="text-gray-400 text-[0.65rem] font-black tracking-[0.1em]">NEXT ACTIONシート作成フォーム</p>
+            </header>
+
+            <div class="mb-8">
+                <button id="open-draft-list-btn" class="hidden w-full bg-[#cb563e] hover:bg-[#b94b36] text-white py-4 rounded-2xl font-black text-sm transition flex items-center justify-center gap-2 shadow-lg">
+                    💾 保存データを確認する / 編集を再開する
+                </button>
+            </div>
+
+            <div class="mb-6">
+                <input id="draft-file" type="file" accept=".json,application/json" class="sr-only">
+                <button id="import-draft-btn" type="button" class="min-h-[44px] w-full rounded-xl border border-[#182349] px-4 py-2 font-bold text-[#182349]">下書きファイルを読み込む</button>
+            </div>
+            <div class="space-y-6">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label for="manual-username" class="block text-xs font-black text-gray-500 mb-2 uppercase tracking-widest">記入者名</label>
+                        <input type="text" id="manual-username" placeholder="名前を入力" class="w-full border-2 border-[#f3e9e1] p-4 rounded-xl focus:border-[#cb563e] outline-none font-bold">
+                    </div>
+                    <div>
+                        <label for="manual-date" class="block text-xs font-black text-gray-500 mb-2 uppercase tracking-widest">入力日</label>
+                        <input type="date" id="manual-date" class="w-full border-2 border-[#f3e9e1] p-4 rounded-xl focus:border-[#cb563e] outline-none text-sm font-bold">
+                    </div>
+                </div>
+
+                <div>
+                    <label for="manual-dish" class="block text-xs font-black text-gray-500 mb-2">料理名（必須）</label>
+                    <input type="text" id="manual-dish" required class="w-full border-2 border-[#f3e9e1] p-4 rounded-xl focus:border-[#cb563e] outline-none font-bold">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-black text-gray-500 mb-2 uppercase tracking-widest">使用モードを選択</label>
+                    <div class="grid grid-cols-2 gap-4">
+                        <label class="flex flex-col items-center p-5 border-2 border-[#f3e9e1] rounded-2xl cursor-pointer hover:bg-[#fffaf7]">
+                            <input type="radio" name="usage-mode" value="handwriting" class="mb-3 w-5 h-5 accent-[#cb563e]">
+                            <span class="font-black">手書きで使用</span>
+                        </label>
+                        <label class="flex flex-col items-center p-5 border-2 border-[#f3e9e1] rounded-2xl cursor-pointer hover:bg-[#fffaf7]">
+                            <input type="radio" name="usage-mode" value="online" checked class="mb-3 w-5 h-5 accent-[#cb563e]">
+                            <span class="font-black">ブラウザで入力</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-black text-gray-500 mb-2 uppercase tracking-widest">検証用レシピ（TXT・任意）</label>
+                    <div class="border-2 border-dashed border-[#eee0d5] rounded-2xl p-8 text-center hover:border-[#cb563e] bg-[#fdfaf8]">
+                        <input type="file" id="input-file" accept=".txt" class="hidden">
+                        <label for="input-file" class="cursor-pointer block">
+                            <div class="text-2xl mb-2">📄</div>
+                            <div class="text-sm font-bold text-gray-600">TXTファイルを選ぶ</div>
+                            <div id="file-display" class="mt-4 text-xs font-black text-[#182349] hidden"></div>
+                        </label>
+                    </div>
+                </div>
+
+                <p class="text-sm text-gray-600">ファイルを選ばずにシートを作成できます。</p>
+                <button id="createBtn" class="w-full bg-[#cb563e] text-white py-5 rounded-2xl font-black text-lg hover:bg-[#b94b36] shadow-xl">
+                    NEXT ACTIONシートを作成
+                </button>
+                <button type="button" id="sampleBtn" class="w-full rounded-xl border border-[#182349] py-3 font-bold text-[#182349]">サンプルで試す</button>
+                <p class="text-sm text-gray-600">入力中の内容はこのブラウザに自動保存されます。別のブラウザで再開するときは、下書きファイルを保存してください。</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- OUTPUT SCREEN -->
+    <div id="output-screen" class="hidden pb-24">
+        <div class="container mx-auto px-4 py-8 no-print flex flex-col gap-6 max-w-[210mm]">
+            <div class="flex justify-between items-center">
+                <button id="backBtn" class="text-sm font-black flex items-center gap-2 text-gray-400 hover:text-[#182349]">
+                    設定に戻る
+                </button>
+                <button id="printBtn" class="bg-[#cb563e] text-white px-8 py-4 rounded-full font-black shadow-2xl hover:bg-[#b94b36] flex items-center gap-2">
+                    <span>📥</span> PDF保存 / 印刷
+                </button>
+            </div>
+
+            <div id="online-controls" class="hidden bg-white p-6 rounded-3xl shadow-lg border border-[#eee0d5] flex flex-col md:flex-row items-center gap-6">
+                <div class="flex flex-wrap items-center gap-3 flex-1">
+                    <button id="export-draft-btn" type="button" class="min-h-[44px] rounded-xl bg-[#182349] px-4 py-2 text-sm font-bold text-white">下書きファイルを保存</button>
+                    <div class="flex flex-col">
+                        <button id="overwrite-save-btn" class="bg-[#182349] text-white px-6 py-3 rounded-xl text-sm font-black hover:bg-[#25325d] transition">💾 上書き保存</button>
+                        <span class="text-[9px] text-gray-400 font-bold mt-1 text-center">現在の内容を更新</span>
+                    </div>
+                    <div class="flex flex-col">
+                        <button id="save-as-btn" class="bg-white border-2 border-[#182349] text-[#182349] px-6 py-3 rounded-xl text-sm font-black hover:bg-[#f3f4f8] transition">📋 別名で保存</button>
+                        <span class="text-[9px] text-gray-400 font-bold mt-1 text-center">新しくコピー保存</span>
+                    </div>
+                    <div class="flex flex-col">
+                        <button id="rename-save-btn" class="bg-[#f8f3ef] border border-gray-200 text-[#182349] px-4 py-3 rounded-xl text-sm font-black hover:bg-[#f3f4f8] transition">✏️ 保存名変更</button>
+                        <span class="text-[9px] text-gray-400 font-bold mt-1 text-center">名前だけ変更</span>
+                    </div>
+                </div>
+                <div class="flex flex-col items-end gap-1 border-l pl-6 border-gray-100 min-w-[200px]">
+                    <div class="text-[10px] text-gray-400 font-black tracking-widest">現在の保存名</div>
+                    <div id="display-draft-name" class="text-xs font-black text-[#182349] max-w-[200px] truncate">未保存</div>
+                    <div id="save-status-text" class="text-[10px] font-bold text-[#182349] mt-1">未保存</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="sheet-content" class="a4-page"></div>
+        <div id="mobile-export-content-wrapper"></div>
+    </div>
+
+    <!-- MODALS -->
+    <div id="draft-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="p-6 border-b border-gray-100 flex justify-between items-center bg-[#fdfaf8]">
+                <h2 class="text-lg font-black text-[#182349]">保存済み下書き一覧</h2>
+                <button onclick="closeModal('draft-modal')" class="text-gray-400 text-xl font-bold">&times;</button>
+            </div>
+            <div id="draft-list-container" class="overflow-y-auto p-4 space-y-3 flex-1 bg-white" style="min-height: 200px;"></div>
+            <div class="p-6 border-t border-gray-100 flex justify-end">
+                <button onclick="closeModal('draft-modal')" class="bg-[#fdfaf8] text-gray-600 px-6 py-2 rounded-xl text-sm font-black">閉じる</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="save-name-modal" class="modal-overlay">
+        <div class="modal-content max-w-[450px] p-8 space-y-6">
+            <h2 id="save-modal-title" class="text-lg font-black text-[#182349]">保存名の入力</h2>
+            <div>
+                <label class="block text-[10px] font-black text-gray-400 uppercase mb-2">下書きの名前</label>
+                <input type="text" id="new-draft-name-input" class="w-full border-2 border-gray-100 p-4 rounded-xl focus:border-[#182349] outline-none font-bold text-sm">
+            </div>
+            <div class="flex gap-3">
+                <button onclick="closeModal('save-name-modal')" class="flex-1 bg-[#fdfaf8] text-gray-500 py-4 rounded-xl font-black text-sm">キャンセル</button>
+                <button id="confirm-save-btn" type="button" class="flex-1 bg-[#182349] text-white py-4 rounded-xl font-black text-sm">保存する</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="pdf-save-modal" class="modal-overlay">
+        <div class="modal-content max-w-[460px] p-8 space-y-5">
+            <div>
+                <h2 class="text-lg font-black text-[#182349] mb-2">PDFの保存方法を選択</h2>
+                <p class="text-xs font-bold text-gray-400 leading-relaxed">
+                    スマホでは自動保存がブロックされる場合があります。<br>
+                    「PDFを共有／保存する」から保存してください。
+                </p>
+            </div>
+
+            <button id="share-pdf-btn" type="button" class="w-full bg-[#cb563e] text-white py-4 rounded-xl font-black text-sm">
+                📤 PDFを共有／保存する
+            </button>
+
+            <button id="open-pdf-tab-btn" type="button" class="hidden w-full bg-[#182349] text-white py-4 rounded-xl font-black text-sm">
+                🔎 PDFを別タブで開く
+            </button>
+
+            <button id="download-pdf-btn" type="button" class="hidden w-full bg-white border-2 border-[#182349] text-[#182349] py-4 rounded-xl font-black text-sm">
+                📥 ダウンロードを試す
+            </button>
+
+            <button onclick="closeModal('pdf-save-modal')" type="button" class="w-full bg-[#fdfaf8] text-gray-500 py-3 rounded-xl font-black text-sm">
+                閉じる
+            </button>
+        </div>
+    </div>
+
+    <script>
+
+        // --- 設定定数 ---
+        const FORM_VARIANT = 'next_action_final_v1';
+        const LOCAL_DRAFTS_KEY = `edicode_next_action_${FORM_VARIANT}_drafts`;
+        const LOCAL_LIVE_SESSION_KEY = `edicode_next_action_${FORM_VARIANT}_live_session`;
+
+        // --- グローバル状態 ---
+        let currentDraftId = null, currentDraftName = '', modalMode = 'as_new', mode = 'handwriting', currentData = null, currentUser = '', currentDate = '', currentRawText = '';
+        let saveTimer = null, localSnapshotTimer = null, liveSessionTimer = null;
+        let previousInputValues = {};
+        let latestPdfBlob = null;
+        let latestPdfUrl = null;
+        let latestPdfFileName = '';
+
+        // --- ヘルパー関数 ---
+        function showToast(m) {
+            const t = document.getElementById('toast');
+            if (t) { t.innerText = m; t.style.display = 'block'; setTimeout(() => t.style.display = 'none', 3000); }
+        }
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+        function escapeHtml(value) { return String(value || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;'); }
+        function sanitizeSaveNamePart(v, fallback = '未設定') { return String(v || '').trim().replace(/[\\\/:*?"<>|\n\r\t]/g, '').replace(/\s+/g, '') || fallback; }
+
+        function formatDateForSaveName(dateValue) {
+            const raw = String(dateValue || '').trim();
+            if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw.replace(/-/g, '');
+            const today = new Date();
+            return today.getFullYear() + String(today.getMonth() + 1).padStart(2, '0') + String(today.getDate()).padStart(2, '0');
+        }
+
+        function createDefaultDraftName() {
+            return formatDateForSaveName(currentDate) + '_' + sanitizeSaveNamePart(currentData?.dish, '料理名未設定') + '_' + sanitizeSaveNamePart(currentUser, '入力者未設定');
+        }
+
+        function createPdfFileName() {
+            const datePart = formatDateForSaveName(currentDate);
+            const userPart = sanitizeSaveNamePart(currentUser, '入力者未設定');
+            const dishPart = sanitizeSaveNamePart(currentData?.dish, '料理名未設定');
+            const modeLabel = mode === 'online' ? 'オンライン' : '手書き';
+
+            return `【${datePart}_${userPart}】${dishPart}_NEXT ACTIONシート_${modeLabel}`;
+        }
+
+        function updateSaveStatus(isManual) {
+            const st = document.getElementById('save-status-text');
+            if (st) st.innerText = (isManual ? '最終保存：' : '自動保存済：') + new Date().toLocaleTimeString();
+            const disp = document.getElementById('display-draft-name');
+            if (disp) disp.innerText = currentDraftId ? currentDraftName : '未保存';
+        }
+
+        function isMobileDevice() {
+            return /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+        }
+
+        function revokeLatestPdfUrl() {
+            if (latestPdfUrl) {
+                URL.revokeObjectURL(latestPdfUrl);
+                latestPdfUrl = null;
+            }
+        }
+
+        function preparePdfFile(blob, fileName) {
+            latestPdfBlob = blob;
+            latestPdfFileName = fileName;
+            revokeLatestPdfUrl();
+            latestPdfUrl = URL.createObjectURL(blob);
+        }
+
+        function triggerDirectPdfDownload(blob, fileName) {
+            preparePdfFile(blob, fileName);
+
+            const a = document.createElement('a');
+            a.href = latestPdfUrl;
+            a.download = fileName;
+            a.target = '_blank';
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+        }
+
+        function openPdfSaveModal(blob, fileName) {
+            preparePdfFile(blob, fileName);
+
+            const modal = document.getElementById('pdf-save-modal');
+            const shareBtn = document.getElementById('share-pdf-btn');
+
+            if (shareBtn) {
+                try {
+                    const file = new File([latestPdfBlob], latestPdfFileName, { type: 'application/pdf' });
+                    const canShareFile = navigator.canShare && navigator.canShare({ files: [file] });
+
+                    if (navigator.share && canShareFile) {
+                        shareBtn.style.display = 'block';
+                    } else {
+                        shareBtn.style.display = 'none';
+                    }
+                } catch (e) {
+                    shareBtn.style.display = 'none';
+                }
+            }
+
+            if (modal) modal.style.display = 'flex';
+        }
+
+        async function shareLatestPdf() {
+            if (!latestPdfBlob || !latestPdfFileName) {
+                showToast('PDFデータが見つかりません。もう一度PDFを生成してください。');
+                return;
+            }
+
+            try {
+                const file = new File([latestPdfBlob], latestPdfFileName, { type: 'application/pdf' });
+
+                if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+                    await navigator.share({
+                        files: [file],
+                        title: latestPdfFileName,
+                        text: 'EDICODE NEXT ACTIONシート'
+                    });
+                } else {
+                    showToast('この環境では共有保存に対応していません。');
+                }
+            } catch (e) {
+                console.warn('PDF share cancelled or failed:', e);
+                showToast('共有をキャンセルしました。');
+            }
+        }
+
+        function openLatestPdfInNewTab() {
+            if (!latestPdfUrl) {
+                showToast('PDFデータが見つかりません。もう一度PDFを生成してください。');
+                return;
+            }
+
+            const opened = window.open(latestPdfUrl, '_blank');
+
+            if (!opened) {
+                showToast('別タブ表示がブロックされました。ダウンロードを試してください。');
+            }
+        }
+
+        function downloadLatestPdf() {
+            if (!latestPdfUrl || !latestPdfFileName) {
+                showToast('PDFデータが見つかりません。もう一度PDFを生成してください。');
+                return;
+            }
+
+            const a = document.createElement('a');
+            a.href = latestPdfUrl;
+            a.download = latestPdfFileName;
+            a.target = '_blank';
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+        }
+
+        // --- データ構築・保存ロジック ---
+
+        function buildDraftData() {
+            if (!currentData) return null;
+            return {
+                draftId: currentDraftId || 'draft_' + Date.now(),
+                draftName: currentDraftName || createDefaultDraftName(),
+                username: currentUser,
+                date: currentDate,
+                mode: mode,
+                rawText: currentRawText,
+                parsedData: currentData,
+                inputValues: { ...previousInputValues, ...collectInputValues() },
+                updatedAt: new Date().toISOString(),
+                savedAtLabel: new Date().toLocaleString()
+            };
+        }
+
+        function saveDraftToLocal(draftData) {
+            if (!draftData) return;
+            try {
+                const local = JSON.parse(localStorage.getItem(LOCAL_DRAFTS_KEY) || '{}');
+                local[draftData.draftId] = draftData;
+                localStorage.setItem(LOCAL_DRAFTS_KEY, JSON.stringify(local));
+            } catch (e) { throw new Error('下書きを保存できませんでした', { cause: e }); }
+        }
+
+        async function saveDraft(isManual, options = {}) {
+            if (!currentData) return;
+            if (mode !== 'online') return;
+
+            const skipNameModal = options.skipNameModal === true;
+            if (isManual && !currentDraftId && !skipNameModal) { openSaveModal('as_new'); return; }
+            
+            // 自動保存のガード: IDがない場合は自動保存しない
+            if (!isManual && !currentDraftId) return;
+
+            const draftData = buildDraftData();
+            if (!currentDraftId) currentDraftId = draftData.draftId;
+            if (!currentDraftName) currentDraftName = draftData.draftName;
+
+            try {
+                saveDraftToLocal(draftData);
+                updateSaveStatus(isManual);
+                if (isManual) {
+                    showToast('保存しました');
+                    updateDraftResumeButtonVisibility();
+                }
+            } catch (e) { 
+                console.error(e);
+                if (isManual) showToast('保存に失敗しました'); 
+            }
+        }
+
+        function saveLiveSession() {
+            if (!currentData) return;
+            try {
+                const liveData = buildDraftData();
+                if (liveData) {
+                    localStorage.setItem(LOCAL_LIVE_SESSION_KEY, JSON.stringify(liveData));
+                }
+            } catch (e) { console.warn('Live session save skipped:', e); }
+        }
+
+        function scheduleSafeAutoSave() {
+            if (!currentData || mode !== 'online') return;
+
+            if (liveSessionTimer) clearTimeout(liveSessionTimer);
+            liveSessionTimer = setTimeout(() => saveLiveSession(), 200);
+
+            // currentDraftIdがある場合のみ、本番下書きへの自動保存を行う
+            if (currentDraftId) {
+                if (saveTimer) clearTimeout(saveTimer);
+                saveTimer = setTimeout(() => saveDraft(false), 2500);
+            }
+        }
+
+        // --- リスト取得・表示ロジック ---
+
+        async function fetchDraftListArray() {
+            let l = [];
+            const processedIds = new Set();
+
+            // 1. 現行の編集中データ
+            try {
+                const liveRaw = localStorage.getItem(LOCAL_LIVE_SESSION_KEY);
+                if (liveRaw) {
+                    const live = JSON.parse(liveRaw);
+                    if (live && live.parsedData) {
+                        const item = { ...live, draftId: '__live_session__', draftName: '前回の編集中データ（自動保存）', isLiveSession: true };
+                        l.push(item);
+                        // liveが持っていた本来のIDも記録
+                        if (live.draftId) processedIds.add(live.draftId);
+                    }
+                }
+            } catch (e) {}
+
+            // 2. localStorage 下書き
+            try {
+                const local = JSON.parse(localStorage.getItem(LOCAL_DRAFTS_KEY) || '{}');
+                Object.values(local).forEach(d => {
+                    if (!processedIds.has(d.draftId)) {
+                        l.push(d);
+                        processedIds.add(d.draftId);
+                    }
+                });
+            } catch (e) {}
+
+            // 3. 旧保存データの救済
+            try {
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    if (key === LOCAL_DRAFTS_KEY || key === LOCAL_LIVE_SESSION_KEY) continue;
+                    if (/edicode|next_action|draft|live_session/i.test(key)) {
+                        const val = localStorage.getItem(key);
+                        try {
+                            const d = JSON.parse(val);
+                            // 形式チェック
+                            if (d && d.parsedData && !processedIds.has(d.draftId || key)) {
+                                const item = {
+                                    ...d,
+                                    draftId: d.draftId || key,
+                                    draftName: d.draftName || d.dish || '旧保存データ',
+                                    isLegacy: true,
+                                    __sourceKey: key
+                                };
+                                l.push(item);
+                                processedIds.add(item.draftId);
+                            }
+                        } catch (e) {}
+                    }
+                }
+            } catch (e) {}
+
+            return l.sort((a, b) => new Date(b.updatedAt || 0) - new Date(a.updatedAt || 0));
+        }
+
+        async function loadDraftList() {
+            const container = document.getElementById('draft-list-container');
+            container.innerHTML = '<div class="p-8 text-center text-sm font-bold text-gray-400">データを読み込み中...</div>';
+            
+            const list = await fetchDraftListArray();
+
+            if (!list.length) {
+                container.innerHTML = `<div class="p-12 text-center">
+                    <div class="text-4xl mb-4">📭</div>
+                    <div class="text-sm font-bold text-gray-400">保存データはありません。</div>
+                </div>`;
+            } else {
+                container.innerHTML = list.map((d, index) => {
+                    const dish = d.parsedData?.dish || '料理名不明';
+                    const dateStr = new Date(d.updatedAt || Date.now()).toLocaleString();
+                    const badge = d.isLiveSession ? '<span class="bg-blue-100 text-blue-600 px-2 py-0.5 rounded text-[9px] font-black mr-2">編集中</span>' : 
+                                  d.isLegacy ? '<span class="bg-gray-100 text-gray-500 px-2 py-0.5 rounded text-[9px] font-black mr-2">旧データ</span>' : '';
+
+                    return `
+                        <div class="p-4 border-2 border-gray-50 rounded-2xl hover:border-orange-200 transition bg-white flex justify-between items-center gap-4">
+                            <button type="button" class="text-left cursor-pointer flex-1 overflow-hidden" data-resume-index="${index}">
+                                <div class="flex items-center mb-1">${badge}<div class="draft-title-text font-black text-[#182349] truncate">${escapeHtml(d.draftName || '名称未設定')}</div></div>
+                                <div class="draft-meta-text text-[10px] font-bold text-gray-400 flex flex-wrap gap-x-3">
+                                    <span>🍴 ${escapeHtml(dish)}</span>
+                                    <span>👤 ${escapeHtml(d.username || '未設定')}</span>
+                                    <span>🕒 ${dateStr}</span>
+                                </div>
+                            </button>
+                            ${(d.isLiveSession || d.isLegacy) ? '' : `<button data-delete-index="${index}" aria-label="下書きを削除" class="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-red-50 text-gray-300 hover:text-red-500 transition">🗑️</button>`}
+                        </div>
+                    `;
+                }).join('');
+                container.querySelectorAll('[data-resume-index]').forEach(button => {
+                    button.onclick = () => resumeDraft(list[Number(button.dataset.resumeIndex)]);
+                });
+                container.querySelectorAll('[data-delete-index]').forEach(button => {
+                    button.onclick = () => window.del(list[Number(button.dataset.deleteIndex)].draftId);
+                });
+            }
+        }
+
+        // --- 復元ロジック ---
+
+        function resumeDraft(d) {
+            if (!d || !d.parsedData) return;
+            clearTimeout(saveTimer);
+            clearTimeout(liveSessionTimer);
+
+            const iv = { ...d.inputValues };
+            previousInputValues = { ...iv };
+            for (const action of ['keep', 'fix', 'cut', 'try']) {
+                const key = 'plan-' + action;
+                if (key in iv) continue;
+                iv[key] = ['rashisa', 'koku', 'contrast'].map(axis => iv['p-' + axis + '-' + action])
+                    .filter(Boolean).join('\n\n');
+            }
+
+            // 1. グローバル状態の復元
+            currentDraftId = d.isLiveSession ? (d.draftId === '__live_session__' ? null : d.draftId) : d.draftId;
+            currentDraftName = d.isLiveSession ? '' : d.draftName;
+            mode = d.mode || 'online';
+            currentData = d.parsedData;
+            document.getElementById('manual-dish').value = currentData.dish;
+            currentUser = d.username || '';
+            currentDate = d.date || '';
+            currentRawText = d.rawText || '';
+
+            // 2. 画面描画
+            renderSheet(currentData, currentUser, currentDate);
+            document.getElementById('setup-screen').classList.add('hidden');
+            document.getElementById('output-screen').classList.remove('hidden');
+            
+            const oc = document.getElementById('online-controls');
+            if (mode === 'online') oc.classList.remove('hidden'); else oc.classList.add('hidden');
+
+            Object.entries(iv).forEach(([key, value]) => {
+                const field = document.querySelector(`[data-save-key="${CSS.escape(key)}"]`);
+                if (field) field.value = value;
+            });
+            updateSaveStatus(true);
+            saveLiveSession();
+
+            closeModal('draft-modal');
+            showToast('データを復元しました');
+        }
+
+
+        // --- モーダル・UI操作 ---
+
+        function openSaveModal(m) {
+            modalMode = m;
+            const title = document.getElementById('save-modal-title');
+            const input = document.getElementById('new-draft-name-input');
+            if (!title || !input) return;
+
+            if (m === 'rename') {
+                title.innerText = '保存名の変更';
+                input.value = currentDraftName || createDefaultDraftName();
+            } else {
+                title.innerText = m === 'as_new' ? '新しい名前で保存' : '下書きを保存する';
+                input.value = createDefaultDraftName();
+            }
+            document.getElementById('save-name-modal').style.display = 'flex';
+            setTimeout(() => input.focus(), 100);
+        }
+
+        async function confirmSaveAction() {
+            const input = document.getElementById('new-draft-name-input');
+            if (!input) return;
+            const newName = input.value.trim();
+            if (!newName) { showToast('保存名を入力してください。'); return; }
+            
+            if (modalMode === 'as_new') {
+                currentDraftId = 'draft_' + Date.now();
+            }
+            currentDraftName = newName;
+            closeModal('save-name-modal');
+            await saveDraft(true, { skipNameModal: true });
+            saveLiveSession();
+            updateDraftResumeButtonVisibility();
+        }
+
+        async function updateDraftResumeButtonVisibility() {
+            const btn = document.getElementById('open-draft-list-btn');
+            if (!btn) return;
+
+            try {
+                const list = await fetchDraftListArray();
+
+                if (Array.isArray(list) && list.length > 0) {
+                    btn.classList.remove('hidden');
+                    btn.disabled = false;
+                } else {
+                    btn.classList.add('hidden');
+                }
+            } catch (e) {
+                console.warn('Draft resume button visibility check failed:', e);
+                btn.classList.add('hidden');
+            }
+        }
+
+        function collectInputValues() {
+            const vals = {};
+            document.querySelectorAll('[data-save-key]').forEach(el => {
+                if (el.type === 'radio') { if (el.checked) vals[el.getAttribute('data-save-key')] = el.value; }
+                else { vals[el.getAttribute('data-save-key')] = el.value; }
+            });
+            return vals;
+        }
+
+        // --- 解析ロジック (既存維持) ---
+
+
+        const priorityTitle = 'レシピ設計において、特に重視した点';
+
+        function readTextSections(text) {
+            const sections = new Map();
+            const headings = [...text.matchAll(/^[ \t]*===[ \t]*(.+?)[ \t]*===[ \t]*(?=\r?$)/gm)];
+            headings.forEach((heading, index) => {
+                const end = headings[index + 1]?.index ?? text.length;
+                sections.set(heading[1].trim(), text.slice(heading.index + heading[0].length, end).trim());
+            });
+            return sections;
+        }
+
+        function readRecipe(text) {
+            const sections = readTextSections(text);
+            const recipe = ['レシピ情報', '材料', '調理方法', '注意事項'].flatMap(title =>
+                sections.get(title) ? [[title, sections.get(title)]] : []
+            );
+            const dish = sections.get('料理名') || '';
+            if (!dish && !recipe.length) throw new Error('料理名・材料・調理方法などが入った検証用レシピTXTを選んでください。');
+            return {
+                dish,
+                priorities: sections.get(priorityTitle) || sections.get('レシピ設計において特に重視した点') || sections.get('素案レシピからの主な修正点') || '',
+                recipe
+            };
+        }
+
+        function renderInput(min, key, placeholder = "...") {
+            if (mode === 'online') return `<textarea id="field-${key}" class="box-input" data-save-key="${key}" style="min-height:${min}px" placeholder="${placeholder}"></textarea>`;
+            return `<div class="handwriting-box" style="min-height:${min}px"></div>`;
+        }
+
+        const reviewSections = [
+            ['ゴールの達成度', '自分が設計した料理のゴールに対して、今回の仕上がりを採点します。', [
+                ['goal-score', '達成度', '0点：達成できなかった ／ 100点：達成できた'],
+                ['goal-reason', 'その点数にした理由'],
+                ['goal-achieved', '達成できたこと'],
+                ['goal-missed', '達成できなかったこと']
+            ]],
+            ['調理中にレシピから変わったこと', '変更があった場合に記入します。複数ある場合は、変更と結果が対応するように書きます。', [
+                { title: '予定外の変更', fields: [
+                    ['change-unplanned', '何が変わった？', '変えざるを得なかったことや、結果的に変わったこと。そのときの事情も書きます。'],
+                    ['change-unplanned-result', 'その変更で、どうなった？']
+                ] },
+                { title: '意図的な変更', fields: [
+                    ['change-intentional', '何を、なぜ変えた？'],
+                    ['change-intentional-result', 'その変更で、どうなった？']
+                ] }
+            ]],
+            ['次回の方針', '', [
+                ['plan-keep', '活かす', 'うまくいったことのうち、次回も残す・伸ばすこと'],
+                ['plan-fix', '直す', 'うまくいかなかったことを、次回どう直すか'],
+                ['plan-cut', '削ぐ', '次回は何を減らす・やめるか'],
+                ['plan-try', '試したいこと', '次回、何を変えて何を確かめるか']
+            ]]
+        ];
+
+        function renderReviewField([key, label, hint]) {
+            const field = key === 'goal-score'
+                ? (mode === 'online'
+                    ? '<input id="field-goal-score" data-save-key="goal-score" type="number" min="0" max="100" step="1" inputmode="numeric" aria-describedby="score-range" class="box-input max-w-[120px]">'
+                    : '<span class="inline-block w-20 border-b border-[#182349]" aria-hidden="true">&nbsp;</span>') + ' <span class="text-sm">/ 100点</span>'
+                : renderInput(84, key, '');
+            return `<div class="mb-4">
+                <label ${mode === 'online' ? `for="field-${key}"` : ''} class="mb-1 block font-bold text-[#182349]">${label}</label>
+                ${hint ? `<p ${key === 'goal-score' ? 'id="score-range"' : ''} class="mb-2 text-sm text-gray-600">${hint}</p>` : ''}
+                ${field}
+            </div>`;
+        }
+
+        function renderReviewEntry(entry) {
+            if (!entry.fields) return renderReviewField(entry);
+            return `<fieldset class="mb-5 min-w-0 rounded-xl border border-[#aab9cf] border-l-4 border-l-[#182349] bg-[#f5f7fb] px-4 pb-1 pt-2 md:px-6">
+                <legend class="px-2 text-base font-black text-[#182349]">${entry.title}</legend>
+                ${entry.fields.map(renderReviewField).join('')}
+            </fieldset>`;
+        }
+
+        function renderSheet(data, user, date) {
+            const container = document.getElementById('sheet-content');
+            container.innerHTML = `
+                <div class="sheet-form-header flex justify-between items-start border-b-[10px] border-[#cb563e] pb-6 mb-8">
+                    <div class="sheet-form-brand">
+                        <h1 class="sheet-form-logo text-5xl font-black text-[#182349]">EDICODE</h1>
+                        <p class="sheet-form-subtitle text-[0.65rem] font-black text-gray-400">NEXT ACTIONシート作成フォーム</p>
+                    </div>
+                    <div class="sheet-form-meta text-right font-black">
+                        <div class="sheet-form-dish text-xl text-[#182349]">${escapeHtml(data.dish)}</div>
+                        <div class="sheet-form-userdate text-[0.7rem] text-gray-500">USER: ${escapeHtml(user)} / DATE: ${escapeHtml(date)}</div>
+                    </div>
+                </div>
+                ${data.priorities || data.recipe?.length ? `
+                    <section class="mb-6 rounded-xl border border-[#eee0d5] bg-[#fffaf7] p-4" aria-label="検証用レシピの参照">
+                        ${data.priorities ? `<h2 class="mb-2 text-base font-black text-[#182349]">${priorityTitle}</h2>
+                        <p class="whitespace-pre-wrap break-words text-sm text-gray-800">${escapeHtml(data.priorities)}</p>` : ''}
+                        ${data.recipe?.length ? `<details class="mt-4">
+                            <summary class="cursor-pointer text-sm font-bold text-[#182349]">検証用レシピを見る</summary>
+                            ${data.recipe.map(([title, content]) => `<h3 class="mb-1 mt-4 font-bold">${escapeHtml(title)}</h3>
+                            <div class="whitespace-pre-wrap break-words text-sm">${escapeHtml(content)}</div>`).join('')}
+                        </details>` : ''}
+                    </section>
+                ` : ''}
+                ${reviewSections.map(([title, description, fields], index) => `
+                    <section aria-labelledby="review-${index}">
+                        <h2 id="review-${index}" class="section-title">${title}</h2>
+                        ${description ? `<p class="mb-4 text-sm text-gray-700">${description}</p>` : ''}
+                        ${fields.map(renderReviewEntry).join('')}
+                    </section>
+                `).join('')}
+            `;
+        }
+
+        async function generateStablePdfBlob() {
+            if (!currentData) { showToast('PDF生成に必要なデータがありません。'); return null; }
+            const wrapper = document.getElementById('mobile-export-content-wrapper');
+            wrapper.innerHTML = ''; wrapper.style.display = 'block';
+            
+            const cover = document.createElement('div');
+            cover.id = 'pdf-export-cover';
+            cover.innerHTML = `
+                <div style="text-align:center; font-weight:900; color:#182349; min-width:280px;">
+                    <div style="font-size:20px; margin-bottom:10px;">PDF生成中...</div>
+                    <div id="pdf-progress-page" style="font-size:12px; color:#6b7280; margin-bottom:8px;">準備中...</div>
+                    <div id="pdf-progress-percent" style="font-size:24px; color:#182349; margin-bottom:12px;">0%</div>
+                    <div style="width:280px; height:10px; background:#eee7e1; border-radius:999px; overflow:hidden; margin:0 auto;">
+                        <div id="pdf-progress-bar" style="width:0%; height:100%; background:#cb563e; border-radius:999px; transition:width 0.2s ease;"></div>
+                    </div>
+                </div>`;
+            document.body.appendChild(cover);
+
+            const inputValues = collectInputValues();
+            const pages = [];
+            const PDF_BODY_MAX_HEIGHT = 1000;
+            let currentPageBody = null;
+
+            function createPdfSectionTitle(title) {
+                return `<div style="background-color: #cb563e; color: white; padding: 14px 20px; font-weight: 900; font-size: 21px; border-radius: 8px; margin-bottom: 25px; width: 100%; box-sizing: border-box;">${title}</div>`;
+            }
+
+            function createPdfWritingBox(key, inputValues, minHeight = 100) {
+                const val = inputValues[key] || '';
+                return `<div style="border: 1.5px solid #d8dee8; border-radius: 8px; padding: 12px; font-size: 14px; line-height: 1.65; background-color: #ffffff; min-height: ${minHeight}px; width: 100%; box-sizing: border-box; white-space: pre-wrap; word-break: break-word;">${escapeHtml(val)}</div>`;
+            }
+
+            function startNewPage() {
+                const p = document.createElement('div');
+                p.style.cssText = 'width:1000px; height:1414px; background:#fff; padding:72px; box-sizing:border-box; position:relative; overflow:hidden;';
+                p.innerHTML = `
+                    <div style="display:flex; justify-content:space-between; border-bottom:8px solid #cb563e; padding-bottom:20px; margin-bottom:40px;">
+                        <div><h1 style="font-size:48px; font-weight:900; color:#182349; margin:0;">EDICODE</h1><p style="font-size:10px; color:#9ca3af; font-weight:900;">NEXT ACTIONシート</p></div>
+                        <div style="text-align:right;"><div style="font-size:18px; font-weight:900;">${escapeHtml(currentData.dish)}</div><div style="font-size:10px; color:#6b7280;">USER: ${escapeHtml(currentUser)} / DATE: ${escapeHtml(currentDate)}</div></div>
+                    </div>
+                    <div class="pdf-page-body"></div>`;
+                wrapper.appendChild(p); pages.push(p); return p.querySelector('.pdf-page-body');
+            }
+
+            function addBlockToCurrentSection(html, continueTitle, continueSub = '') {
+                if (!currentPageBody) {
+                    currentPageBody = startNewPage();
+                    currentPageBody.innerHTML += createPdfSectionTitle(continueTitle) + (continueSub || '');
+                }
+                const tmp = document.createElement('div');
+                tmp.innerHTML = String(html || '').trim();
+                const b = tmp.firstElementChild;
+                if (!b) return;
+                currentPageBody.appendChild(b);
+                if (currentPageBody.scrollHeight > PDF_BODY_MAX_HEIGHT) {
+                    currentPageBody.removeChild(b);
+                    currentPageBody = startNewPage();
+                    currentPageBody.innerHTML += createPdfSectionTitle(continueTitle + '（続き）') + (continueSub || '');
+                    currentPageBody.appendChild(b);
+                }
+            }
+
+            try {
+                for (const [title, description, fields] of reviewSections) {
+                    currentPageBody = startNewPage();
+                    const intro = description ? `<p style="margin-bottom:20px;font-size:14px">${description}</p>` : '';
+                    currentPageBody.innerHTML += createPdfSectionTitle(title) + intro;
+                    for (const entry of fields) {
+                        const renderPdfField = ([key, label, hint]) => {
+                            const field = key === 'goal-score'
+                                ? `<p style="font-size:20px;font-weight:700">${escapeHtml(inputValues[key] || '＿＿')} / 100点</p>`
+                                : createPdfWritingBox(key, inputValues, 90);
+                            const guidance = hint ? `<p style="font-size:13px;color:#475569;margin:0 0 6px">${hint}</p>` : '';
+                            return `<div style="margin-bottom:18px"><div style="margin-bottom:5px;font-size:16px;font-weight:900;color:#182349">${label}</div>${guidance}${field}</div>`;
+                        };
+                        const block = entry.fields
+                            ? `<div style="margin-bottom:18px;padding:14px 16px 0;border:1px solid #aab9cf;border-left:5px solid #182349;border-radius:10px;background:#f5f7fb"><h3 style="margin:0 0 12px;font-size:18px;font-weight:900;color:#182349">${entry.title}</h3>${entry.fields.map(renderPdfField).join('')}</div>`
+                            : renderPdfField(entry);
+                        addBlockToCurrentSection(block, title);
+                    }
+                }
+
+                if (document.fonts && document.fonts.ready) await document.fonts.ready;
+
+                async function renderPdfPageToImage(page) {
+                    try {
+                        const canvas = await window.html2canvas(page, {
+                            scale: 1,
+                            backgroundColor: '#ffffff',
+                            useCORS: true,
+                            logging: false
+                        });
+                        return canvas.toDataURL('image/png');
+                    } catch (error) {
+                        return htmlToImage.toPng(page, {
+                            pixelRatio: 1,
+                            backgroundColor: '#ffffff',
+                            skipFonts: true
+                        });
+                    }
+                }
+
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF({ orientation: 'p', unit: 'px', format: [1000, 1414] });
+                for (let i = 0; i < pages.length; i++) {
+                    const p = Math.round(((i + 1) / pages.length) * 100);
+                    const pE = document.getElementById('pdf-progress-page'), pcE = document.getElementById('pdf-progress-percent'), bE = document.getElementById('pdf-progress-bar');
+                    if (pE) pE.innerText = (i + 1) + ' / ' + pages.length + '枚目処理中';
+                    if (pcE) pcE.innerText = p + '%';
+                    if (bE) bE.style.width = p + '%';
+                    await new Promise(r => setTimeout(r, 150));
+                    const png = await renderPdfPageToImage(pages[i]);
+                    if (i > 0) pdf.addPage([1000, 1414], 'p');
+                    pdf.addImage(png, 'PNG', 0, 0, 1000, 1414);
+                }
+                if (document.getElementById('pdf-progress-page')) document.getElementById('pdf-progress-page').innerText = 'PDF作成完了';
+                return pdf.output('blob');
+            } catch (e) {
+                console.error('PDF generation failed:', e);
+                if (document.getElementById('pdf-progress-page')) document.getElementById('pdf-progress-page').innerText = 'PDF生成に失敗しました';
+                return null;
+            } finally {
+                setTimeout(() => {
+                    if(document.getElementById('pdf-export-cover')) document.getElementById('pdf-export-cover').remove();
+                    wrapper.style.display='none'; wrapper.innerHTML = '';
+                }, 1500);
+            }
+        }
+
+        // --- イベントハンドラ ---
+
+        function startSheet(text) {
+            const nameInput = document.getElementById('manual-dish');
+            const parsedRecipe = text === null ? {} : readRecipe(text);
+            const dish = nameInput.value.trim() || parsedRecipe.dish;
+            if (!dish) {
+                nameInput.value = '';
+                nameInput.reportValidity();
+                return;
+            }
+            nameInput.value = dish;
+            parsedRecipe.dish = dish;
+            previousInputValues = {};
+            clearTimeout(saveTimer);
+            clearTimeout(liveSessionTimer);
+            currentDraftId = null;
+            currentDraftName = '';
+            mode = document.querySelector('input[name="usage-mode"]:checked').value;
+            currentRawText = text ?? '';
+            currentData = parsedRecipe;
+            currentUser = document.getElementById('manual-username').value || '未設定';
+            currentDate = document.getElementById('manual-date').value || new Date().toISOString().split('T')[0];
+            
+            renderSheet(currentData, currentUser, currentDate);
+            document.getElementById('setup-screen').classList.add('hidden');
+            document.getElementById('output-screen').classList.remove('hidden');
+            document.getElementById('online-controls').classList.toggle('hidden', mode !== 'online');
+            
+            saveLiveSession();
+            updateSaveStatus(false);
+        }
+
+        document.getElementById('createBtn').onclick = async () => {
+            const file = document.getElementById('input-file').files[0];
+            const button = document.getElementById('createBtn');
+            button.disabled = true;
+            button.textContent = 'ファイルを読み込み中…';
+            try {
+                startSheet(file ? await file.text() : null);
+            } catch (error) {
+                showToast(error.message || 'ファイルを読み込めませんでした。');
+            } finally {
+                button.disabled = false;
+                button.textContent = 'NEXT ACTIONシートを作成';
+            }
+        };
+
+        document.getElementById('sampleBtn').onclick = () => {
+            document.getElementById('manual-dish').value = 'きのこと鶏の炊き込みご飯';
+            startSheet(`=== 料理名 ===
+きのこと鶏の炊き込みご飯
+=== レシピ設計において、特に重視した点 ===
+冷めてもだしの風味が残るよう、塩は控えめから調整する。
+=== 材料 ===
+米、きのこ、鶏もも肉、だし、塩
+=== 調理方法 ===
+米、だし、具材を一緒に炊く。`);
+        };
+
+        document.getElementById('backBtn').onclick = () => {
+            safeFullSave();
+            document.getElementById('output-screen').classList.add('hidden');
+            document.getElementById('setup-screen').classList.remove('hidden');
+            updateDraftResumeButtonVisibility();
+        };
+
+        document.getElementById('printBtn').onclick = async () => {
+            const score = document.getElementById('field-goal-score');
+            if (score && !score.reportValidity()) return;
+            const b = await generateStablePdfBlob();
+
+            if (!b) {
+                showToast('PDF生成に失敗しました。');
+                return;
+            }
+
+            const fileName = createPdfFileName() + '.pdf';
+
+            if (isMobileDevice()) {
+                openPdfSaveModal(b, fileName);
+            } else {
+                triggerDirectPdfDownload(b, fileName);
+            }
+        };
+
+        document.getElementById('input-file').onchange = function() {
+            if(this.files[0]) {
+                const d=document.getElementById('file-display');
+                d.innerText="選択中: "+this.files[0].name;
+                d.classList.remove('hidden');
+            }
+        };
+
+        const draftFileFormat = 'edicode-next-action-draft';
+
+        function parseDraftFile(text) {
+            const record = JSON.parse(text);
+            const data = record?.data;
+            const recipe = data?.parsedData;
+            if (record?.format !== draftFileFormat || record.version !== 1
+                || typeof recipe?.dish !== 'string' || !recipe.dish.trim()
+                || !data.inputValues || typeof data.inputValues !== 'object' || Array.isArray(data.inputValues)) {
+                throw new Error('Invalid draft');
+            }
+            const string = value => typeof value === 'string' ? value : '';
+            return {
+                draftId: '__live_session__',
+                isLiveSession: true,
+                mode: data.mode === 'handwriting' ? 'handwriting' : 'online',
+                username: string(data.username),
+                date: string(data.date),
+                rawText: string(data.rawText),
+                parsedData: {
+                    dish: recipe.dish.trim(),
+                    priorities: string(recipe.priorities),
+                    recipe: Array.isArray(recipe.recipe) ? recipe.recipe.filter(pair =>
+                        Array.isArray(pair) && pair.length === 2 && pair.every(value => typeof value === 'string')
+                    ) : []
+                },
+                inputValues: Object.fromEntries(Object.entries(data.inputValues).filter(([, value]) => typeof value === 'string'))
+            };
+        }
+
+        document.getElementById('export-draft-btn').onclick = () => {
+            const data = buildDraftData();
+            if (!data) return;
+            saveLiveSession();
+            const blob = new Blob([JSON.stringify({ format: draftFileFormat, version: 1, data })], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = sanitizeSaveNamePart(data.parsedData.dish) + '_NEXT ACTION下書き.json';
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            setTimeout(() => URL.revokeObjectURL(url), 10000);
+        };
+
+        const draftFileInput = document.getElementById('draft-file');
+        document.getElementById('import-draft-btn').onclick = () => draftFileInput.click();
+        draftFileInput.onchange = async () => {
+            const file = draftFileInput.files[0];
+            if (!file) return;
+            try {
+                if (file.size > 10 * 1024 * 1024) throw new Error('Draft too large');
+                resumeDraft(parseDraftFile(await file.text()));
+            } catch {
+                showToast('NEXT ACTIONシートで保存した下書きJSONを選んでください。');
+            } finally {
+                draftFileInput.value = '';
+            }
+        };
+
+        document.getElementById('overwrite-save-btn').onclick = () => saveDraft(true);
+        document.getElementById('save-as-btn').onclick = () => openSaveModal('as_new');
+        document.getElementById('rename-save-btn').onclick = () => openSaveModal('rename');
+        document.getElementById('confirm-save-btn').onclick = confirmSaveAction;
+
+        document.getElementById('open-draft-list-btn').onclick = () => loadDraftList() && (document.getElementById('draft-modal').style.display = 'flex');
+
+        document.getElementById('share-pdf-btn').onclick = shareLatestPdf;
+        
+        const openPdfTabBtn = document.getElementById('open-pdf-tab-btn');
+        if (openPdfTabBtn) openPdfTabBtn.onclick = openLatestPdfInNewTab;
+
+        const downloadPdfBtn = document.getElementById('download-pdf-btn');
+        if (downloadPdfBtn) downloadPdfBtn.onclick = downloadLatestPdf;
+
+        window.del = async (id) => {
+            if(!confirm('下書きを削除しますか？')) return;
+            const l = JSON.parse(localStorage.getItem(LOCAL_DRAFTS_KEY) || '{}');
+            delete l[id];
+            localStorage.setItem(LOCAL_DRAFTS_KEY, JSON.stringify(l));
+            await loadDraftList();
+            updateDraftResumeButtonVisibility();
+        };
+        
+        document.addEventListener('input', e => {
+            if (e.target.matches('[data-save-key]')) scheduleSafeAutoSave();
+        });
+
+        document.addEventListener('change', e => {
+            if (e.target.matches('[data-save-key]')) scheduleSafeAutoSave();
+        });
+
+        const safeFullSave = () => { saveLiveSession(); if(currentDraftId) saveDraft(false); };
+        window.addEventListener('beforeunload', safeFullSave);
+        window.addEventListener('pagehide', safeFullSave);
+        document.addEventListener('visibilitychange', () => document.visibilityState === 'hidden' && safeFullSave());
+
+        // --- 起動処理 ---
+
+        updateDraftResumeButtonVisibility();
+        window.closeModal = closeModal;
+    </script>
+</body>
+</html>
