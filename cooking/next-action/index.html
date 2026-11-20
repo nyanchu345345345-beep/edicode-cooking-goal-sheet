@@ -660,7 +660,6 @@
                     </div>
                 </div>
 
-                        <button type="button" id="sampleBtn" class="w-full rounded-xl border border-[#cb563e] py-3 font-bold text-[#182349]">サンプルで試す</button>
                     </div>
                 </details>
             </div>
@@ -1505,18 +1504,6 @@
             } finally {
                 updateCreateButton();
             }
-        };
-
-        document.getElementById('sampleBtn').onclick = () => {
-            document.getElementById('manual-dish').value = 'きのこと鶏の炊き込みご飯';
-            startSheet(`=== 料理名 ===
-きのこと鶏の炊き込みご飯
-=== レシピ設計において、特に重視した点 ===
-冷めてもだしの風味が残るよう、塩は控えめから調整する。
-=== 材料 ===
-米、きのこ、鶏もも肉、だし、塩
-=== 調理方法 ===
-米、だし、具材を一緒に炊く。`);
         };
 
         document.getElementById('backBtn').onclick = () => {
