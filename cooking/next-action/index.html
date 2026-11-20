@@ -110,8 +110,7 @@
             overflow: auto;
         }
 
-        #setup-screen input[type="text"],
-        #setup-screen input[type="date"] {
+        #setup-screen input[type="text"] {
             font-size: 16px;
             min-width: 0;
         }
@@ -177,15 +176,7 @@
                 line-height: 1.2 !important;
             }
 
-            #manual-date {
-                appearance: none;
-                -webkit-appearance: none;
-            }
 
-            #manual-date::-webkit-date-and-time-value {
-                text-align: left;
-                min-width: 0;
-            }
 
             #setup-screen label:has(input[name=\"usage-mode\"]) {
                 padding: 16px 8px !important;
@@ -630,23 +621,19 @@
                     <input type="text" id="manual-dish" required placeholder="例：からあげ定食" class="w-full rounded-xl border border-gray-200 p-4 font-bold outline-none focus:border-[#cb563e]">
                 </div>
 
-                <button id="createBtn" type="button" disabled class="w-full rounded-2xl bg-[#cb563e] px-4 py-5 text-base font-black text-white shadow-md hover:bg-[#b94b36] disabled:cursor-default disabled:bg-gray-300">
+                <button id="createBtn" type="button" disabled class="w-full rounded-2xl bg-[#cb563e] px-4 py-5 text-base font-black text-white shadow-md hover:bg-[#b94b36] disabled:cursor-default disabled:bg-[#f4ddd5] disabled:text-[#843625]">
                     料理名を入力してください
                 </button>
 
                 <div>
                     <label for="draft-file" class="mb-2 block text-center font-bold text-[#182349]">下書きファイルを読み込む</label>
                     <input id="draft-file" type="file" accept=".json,application/json" class="block w-full min-w-0 text-sm text-[#182349]">
-                    <button id="open-draft-list-btn" type="button" class="mt-4 hidden min-h-[44px] w-full rounded-xl border border-[#182349] font-bold text-[#182349]">このブラウザの下書きを開く</button>
+                    <button id="open-draft-list-btn" type="button" class="mt-4 hidden min-h-[44px] w-full rounded-xl border border-[#cb563e] font-bold text-[#182349]">このブラウザの下書きを開く</button>
                 </div>
 
                 <details class="border-t border-gray-200 pt-4">
                     <summary class="cursor-pointer text-sm font-bold text-[#182349]">作成オプション</summary>
                     <div class="mt-4 space-y-4">
-                    <div>
-                        <label for="manual-date" class="block text-xs font-black text-gray-500 mb-2 uppercase tracking-widest">入力日</label>
-                        <input type="date" id="manual-date" class="w-full border-2 border-[#f3e9e1] p-4 rounded-xl focus:border-[#cb563e] outline-none text-sm font-bold">
-                    </div>
                 <div>
                     <label class="block text-xs font-black text-gray-500 mb-2 uppercase tracking-widest">使用モードを選択</label>
                     <div class="grid grid-cols-2 gap-4">
@@ -673,7 +660,7 @@
                     </div>
                 </div>
 
-                        <button type="button" id="sampleBtn" class="w-full rounded-xl border border-[#182349] py-3 font-bold text-[#182349]">サンプルで試す</button>
+                        <button type="button" id="sampleBtn" class="w-full rounded-xl border border-[#cb563e] py-3 font-bold text-[#182349]">サンプルで試す</button>
                     </div>
                 </details>
             </div>
@@ -694,17 +681,17 @@
 
             <div id="online-controls" class="hidden bg-white p-6 rounded-3xl shadow-lg border border-[#eee0d5] flex flex-col md:flex-row items-center gap-6">
                 <div class="flex flex-wrap items-center gap-3 flex-1">
-                    <button id="export-draft-btn" type="button" class="min-h-[44px] rounded-xl bg-[#182349] px-4 py-2 text-sm font-bold text-white">下書きファイルを保存</button>
+                    <button id="export-draft-btn" type="button" class="min-h-[44px] rounded-xl bg-[#cb563e] px-4 py-2 text-sm font-bold text-white">下書きファイルを保存</button>
                     <div class="flex flex-col">
-                        <button id="overwrite-save-btn" class="bg-[#182349] text-white px-6 py-3 rounded-xl text-sm font-black hover:bg-[#25325d] transition">💾 上書き保存</button>
+                        <button id="overwrite-save-btn" class="bg-[#cb563e] text-white px-6 py-3 rounded-xl text-sm font-black hover:bg-[#b94b36] transition">💾 上書き保存</button>
                         <span class="text-[9px] text-gray-400 font-bold mt-1 text-center">現在の内容を更新</span>
                     </div>
                     <div class="flex flex-col">
-                        <button id="save-as-btn" class="bg-white border-2 border-[#182349] text-[#182349] px-6 py-3 rounded-xl text-sm font-black hover:bg-[#f3f4f8] transition">📋 別名で保存</button>
+                        <button id="save-as-btn" class="bg-white border-2 border-[#cb563e] text-[#182349] px-6 py-3 rounded-xl text-sm font-black hover:bg-[#fff7f2] transition">📋 別名で保存</button>
                         <span class="text-[9px] text-gray-400 font-bold mt-1 text-center">新しくコピー保存</span>
                     </div>
                     <div class="flex flex-col">
-                        <button id="rename-save-btn" class="bg-[#f8f3ef] border border-gray-200 text-[#182349] px-4 py-3 rounded-xl text-sm font-black hover:bg-[#f3f4f8] transition">✏️ 保存名変更</button>
+                        <button id="rename-save-btn" class="bg-[#f8f3ef] border border-gray-200 text-[#182349] px-4 py-3 rounded-xl text-sm font-black hover:bg-[#fff7f2] transition">✏️ 保存名変更</button>
                         <span class="text-[9px] text-gray-400 font-bold mt-1 text-center">名前だけ変更</span>
                     </div>
                 </div>
@@ -739,11 +726,11 @@
             <h2 id="save-modal-title" class="text-lg font-black text-[#182349]">保存名の入力</h2>
             <div>
                 <label class="block text-[10px] font-black text-gray-400 uppercase mb-2">下書きの名前</label>
-                <input type="text" id="new-draft-name-input" class="w-full border-2 border-gray-100 p-4 rounded-xl focus:border-[#182349] outline-none font-bold text-sm">
+                <input type="text" id="new-draft-name-input" class="w-full border-2 border-gray-100 p-4 rounded-xl focus:border-[#cb563e] outline-none font-bold text-sm">
             </div>
             <div class="flex gap-3">
                 <button onclick="closeModal('save-name-modal')" class="flex-1 bg-[#fdfaf8] text-gray-500 py-4 rounded-xl font-black text-sm">キャンセル</button>
-                <button id="confirm-save-btn" type="button" class="flex-1 bg-[#182349] text-white py-4 rounded-xl font-black text-sm">保存する</button>
+                <button id="confirm-save-btn" type="button" class="flex-1 bg-[#cb563e] text-white py-4 rounded-xl font-black text-sm">保存する</button>
             </div>
         </div>
     </div>
@@ -762,11 +749,11 @@
                 📤 PDFを共有／保存する
             </button>
 
-            <button id="open-pdf-tab-btn" type="button" class="hidden w-full bg-[#182349] text-white py-4 rounded-xl font-black text-sm">
+            <button id="open-pdf-tab-btn" type="button" class="hidden w-full bg-[#cb563e] text-white py-4 rounded-xl font-black text-sm">
                 🔎 PDFを別タブで開く
             </button>
 
-            <button id="download-pdf-btn" type="button" class="hidden w-full bg-white border-2 border-[#182349] text-[#182349] py-4 rounded-xl font-black text-sm">
+            <button id="download-pdf-btn" type="button" class="hidden w-full bg-white border-2 border-[#cb563e] text-[#182349] py-4 rounded-xl font-black text-sm">
                 📥 ダウンロードを試す
             </button>
 
@@ -1139,7 +1126,7 @@
             currentRawText = d.rawText || '';
 
             // 2. 画面描画
-            renderSheet(currentData, currentUser, currentDate);
+            renderSheet(currentData, currentUser);
             document.getElementById('setup-screen').classList.add('hidden');
             document.getElementById('output-screen').classList.remove('hidden');
             
@@ -1284,7 +1271,7 @@
             const field = key === 'goal-score'
                 ? (mode === 'online'
                     ? '<input id="field-goal-score" data-save-key="goal-score" type="number" min="0" max="100" step="1" inputmode="numeric" aria-describedby="score-range" class="box-input max-w-[120px]">'
-                    : '<span class="inline-block w-20 border-b border-[#182349]" aria-hidden="true">&nbsp;</span>') + ' <span class="text-sm">/ 100点</span>'
+                    : '<span class="inline-block w-20 border-b border-[#cb563e]" aria-hidden="true">&nbsp;</span>') + ' <span class="text-sm">/ 100点</span>'
                 : renderInput(84, key, '');
             return `<div class="mb-4">
                 <label ${mode === 'online' ? `for="field-${key}"` : ''} class="mb-1 block font-bold text-[#182349]">${label}</label>
@@ -1295,13 +1282,13 @@
 
         function renderReviewEntry(entry) {
             if (!entry.fields) return renderReviewField(entry);
-            return `<fieldset class="mb-5 min-w-0 rounded-xl border border-[#aab9cf] border-l-4 border-l-[#182349] bg-[#f5f7fb] px-4 pb-1 pt-2 md:px-6">
+            return `<fieldset class="mb-5 min-w-0 rounded-xl border border-[#efd1c4] border-l-4 border-l-[#cb563e] bg-[#fff7f2] px-4 pb-1 pt-2 md:px-6">
                 <legend class="px-2 text-base font-black text-[#182349]">${entry.title}</legend>
                 ${entry.fields.map(renderReviewField).join('')}
             </fieldset>`;
         }
 
-        function renderSheet(data, user, date) {
+        function renderSheet(data, user) {
             const container = document.getElementById('sheet-content');
             container.innerHTML = `
                 <div class="sheet-form-header flex justify-between items-start border-b-[10px] border-[#cb563e] pb-6 mb-8">
@@ -1311,7 +1298,7 @@
                     </div>
                     <div class="sheet-form-meta text-right font-black">
                         <div class="sheet-form-dish text-xl text-[#182349]">${escapeHtml(data.dish)}</div>
-                        <div class="sheet-form-userdate text-[0.7rem] text-gray-500">USER: ${escapeHtml(user)} / DATE: ${escapeHtml(date)}</div>
+                        <div class="sheet-form-userdate text-[0.7rem] text-gray-500">記入者 ${escapeHtml(user)}</div>
                     </div>
                 </div>
                 ${data.priorities || data.recipe?.length ? `
@@ -1373,7 +1360,7 @@
                 p.innerHTML = `
                     <div style="display:flex; justify-content:space-between; border-bottom:8px solid #cb563e; padding-bottom:20px; margin-bottom:40px;">
                         <div><h1 style="font-size:48px; font-weight:900; color:#182349; margin:0;">EDICODE</h1><p style="font-size:10px; color:#9ca3af; font-weight:900;">NEXT ACTIONシート</p></div>
-                        <div style="text-align:right;"><div style="font-size:18px; font-weight:900;">${escapeHtml(currentData.dish)}</div><div style="font-size:10px; color:#6b7280;">USER: ${escapeHtml(currentUser)} / DATE: ${escapeHtml(currentDate)}</div></div>
+                        <div style="text-align:right;"><div style="font-size:18px; font-weight:900;">${escapeHtml(currentData.dish)}</div><div style="font-size:10px; color:#6b7280;">記入者 ${escapeHtml(currentUser)}</div></div>
                     </div>
                     <div class="pdf-page-body"></div>`;
                 wrapper.appendChild(p); pages.push(p); return p.querySelector('.pdf-page-body');
@@ -1411,7 +1398,7 @@
                             return `<div style="margin-bottom:18px"><div style="margin-bottom:5px;font-size:16px;font-weight:900;color:#182349">${label}</div>${guidance}${field}</div>`;
                         };
                         const block = entry.fields
-                            ? `<div style="margin-bottom:18px;padding:14px 16px 0;border:1px solid #aab9cf;border-left:5px solid #182349;border-radius:10px;background:#f5f7fb"><h3 style="margin:0 0 12px;font-size:18px;font-weight:900;color:#182349">${entry.title}</h3>${entry.fields.map(renderPdfField).join('')}</div>`
+                            ? `<div style="margin-bottom:18px;padding:14px 16px 0;border:1px solid #efd1c4;border-left:5px solid #cb563e;border-radius:10px;background:#fff7f2"><h3 style="margin:0 0 12px;font-size:18px;font-weight:900;color:#182349">${entry.title}</h3>${entry.fields.map(renderPdfField).join('')}</div>`
                             : renderPdfField(entry);
                         addBlockToCurrentSection(block, title);
                     }
@@ -1487,9 +1474,9 @@
             currentRawText = text ?? '';
             currentData = parsedRecipe;
             currentUser = document.getElementById('manual-username').value || '未設定';
-            currentDate = document.getElementById('manual-date').value || new Date().toISOString().split('T')[0];
+            currentDate = new Date().toLocaleDateString('sv-SE');
             
-            renderSheet(currentData, currentUser, currentDate);
+            renderSheet(currentData, currentUser);
             document.getElementById('setup-screen').classList.add('hidden');
             document.getElementById('output-screen').classList.remove('hidden');
             document.getElementById('online-controls').classList.toggle('hidden', mode !== 'online');
