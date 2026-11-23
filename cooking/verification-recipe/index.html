@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EDICODE｜検証用レシピシート</title>
+<style>
+:root{--navy:#182349;--ink:#26324a;--muted:#54627b;--line:#dbe2ec;--wash:#f0f3f8;font:16px/1.65 -apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",Meiryo,sans-serif;color:var(--ink);background:var(--wash)}
+*{box-sizing:border-box}
+body{margin:0}
+[hidden]{display:none!important}
+.top{background:var(--navy);color:white;padding:13px max(20px,calc((100% - 1240px)/2));font-weight:800;letter-spacing:.15em}
+main{max-width:1280px;margin:auto;padding:30px 20px 48px}
+h1,h2,h3,p{margin:0}
+h1{font-size:clamp(1.45rem,4vw,2rem);color:var(--navy)}
+.intro{margin:4px 0 24px;color:var(--muted)}
+.layout{display:grid;grid-template-columns:minmax(285px,1fr) minmax(0,1.45fr);gap:24px;align-items:start}
+.editor,.preview{background:white;border:1px solid var(--line);border-radius:14px;min-width:0}
+.editor{padding:20px}
+.fields{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.fields label:first-child{grid-column:1/-1}
+label{display:block;font-weight:700;font-size:.9rem;min-width:0}
+input,textarea,button{font:inherit}
+input,textarea{display:block;width:100%;min-width:0;background:#f9fbfd;border:1px solid #b9c5d6;border-radius:8px;color:var(--ink);padding:9px 11px}
+textarea{min-height:300px;resize:vertical;line-height:1.65}
+button{border:1px solid var(--line);border-radius:8px;background:white;color:var(--navy);font-weight:700;padding:8px 13px;cursor:pointer}
+button.primary{background:var(--navy);color:white;border-color:var(--navy)}
+button:disabled{opacity:.55;cursor:default}
+:focus-visible{outline:3px solid #4c77c0;outline-offset:2px}
+.toolbar,.preview-bar{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.toolbar{margin-top:18px;margin-bottom:6px}
+.preview-bar{padding:14px 18px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.preview-bar h2{font-size:1rem}
+.help,.status{font-size:.875rem;color:var(--muted);margin-top:10px}
+.status:empty{display:none}
+.empty{padding:56px 20px;text-align:center;color:var(--muted)}
+.sheet{padding:clamp(18px,3.5vw,42px);font-size:.93rem;overflow-wrap:anywhere}
+.sheet-head{border-top:5px solid var(--navy);border-bottom:1px solid var(--line);padding:12px 0 14px}
+.mark{font-size:.75rem;letter-spacing:.08em;font-weight:800;color:var(--navy)}
+.sheet-head h2{font-size:1.6em;line-height:1.35;margin:5px 0;color:var(--navy)}
+.meta{font-size:.88em;color:var(--muted)}
+.recipe-section{margin-top:1.2em}
+.recipe-section h3{font-size:1em;color:var(--navy);border-left:4px solid var(--navy);padding:.2em .65em;background:var(--wash);margin-bottom:.55em}
+.recipe-section h4{font-size:1em;color:var(--navy);margin:.65em 0 .2em}
+.recipe-section p{margin:.25em 0}
+.servings{font-weight:800}
+table{border-collapse:collapse;width:100%;table-layout:fixed;margin-bottom:.4em}
+th,td{text-align:left;vertical-align:top;border-bottom:1px solid var(--line);padding:.25em .6em}
+th{font-size:.88em;color:var(--muted)}
+th:last-child{width:34%}
+ol,ul{padding-left:1.65em;margin:.35em 0}
+.notice{font-size:.93em;color:var(--muted)}
+@media(max-width:800px){.layout{grid-template-columns:minmax(0,1fr)}main{padding:20px 12px 35px}}
+@page{size:A4;margin:14mm 15mm}
+@media print{
+  :root,body{background:white}
+  .no-print{display:none!important}
+  main,.layout,.preview,.sheet{display:block;margin:0;padding:0;max-width:none;border:0}
+  .sheet{font-size:10pt;line-height:1.55;print-color-adjust:exact;-webkit-print-color-adjust:exact}
+  .sheet-head,tr{break-inside:avoid}
+  h3,h4,.servings{break-after:avoid}
+  p,li{orphans:2;widows:2}
+  thead{display:table-header-group}
+}
+</style>
+</head>
+<body>
+<header class="top no-print">EDICODE</header>
+<main>
+  <div class="no-print">
+    <h1>検証用レシピシート作成フォーム</h1>
+    <p class="intro">AIが作成したレシピ文を貼り付けると、A4のPDF用に整います。</p>
+  </div>
+  <div class="layout">
+    <section class="editor no-print" aria-label="レシピ入力">
+      <div class="fields">
+        <label>料理名（任意）<input id="dish" placeholder="例：にんじんのレモンサラダ"></label>
+        <label>記入者名（任意）<input id="author" autocomplete="name"></label>
+        <label>試作日（任意）<input id="date" type="date"></label>
+      </div>
+      <div class="toolbar">
+        <label for="recipe">レシピ本文</label>
+        <button id="sample" type="button">入力例を試す</button>
+      </div>
+      <textarea id="recipe" spellcheck="false" aria-describedby="hint" placeholder="=== 材料 ===&#10;【2人前】&#10;【サラダ】&#10;・にんじん：150 g&#10;…"></textarea>
+      <p class="help" id="hint">「=== 材料 ===」などの見出しを含めて貼り付けてください。</p>
+      <p class="status" id="status" aria-live="polite"></p>
+    </section>
+    <section class="preview" aria-label="出力プレビュー">
+      <div class="preview-bar no-print">
+        <h2>出力プレビュー</h2>
+        <button id="print" class="primary" type="button" disabled>PDF保存 / 印刷</button>
+      </div>
+      <p class="empty no-print" id="empty">ここに整形されたシートが表示されます。</p>
+      <article class="sheet" id="sheet" hidden></article>
+    </section>
+  </div>
+</main>
+<script>
+const el = id => document.getElementById(id);
+const sections = ['材料', '調理方法', '調理前に思考した仮説・懸念点', '味見・検証ポイント', '注意事項'];
+const aliases = new Map([
+  ...sections.map(name => [name, name]),
+  ['調理前の仮説・懸念点', sections[2]],
+  ['料理名', '料理名']
+]);
+const notice = 'このレシピは試作・分析・改善のための検証用です。温度・時間・分量は試作時の目安です。食材や調理環境に応じて、仕上がりを確認しながら調整してください。';
+const sample = `=== 料理名 ===
+にんじんのレモンサラダ
+
+=== 材料 ===
+【2人前】
+【サラダ】
+・にんじん：150 g
+・塩：1.5 g
+
+【ドレッシング】
+・レモン果汁：10 ml
+・オリーブ油：12 ml
+
+=== 調理方法 ===
+【1】下準備
+1. にんじんを長さ4 cm、幅2 mmの千切りにする。
+2. 塩をまぶして室温で10分おき、水気を軽く絞る。
+
+【2】和える・盛り付ける
+1. レモン果汁とオリーブ油を混ぜ、にんじんを加えて全体を和える。
+2. 5分おいて味をなじませ、器にふんわり盛り付ける。
+
+==調理前に思考した仮説・懸念点==
+1. にんじんから出た水分で味が薄まると予想し、塩をまぶした後に水気を絞る。
+2. 太さが揃わないと食感に差が出るため、幅2 mmを目安に切る。
+
+==味見・検証ポイント==
+1. 盛り付け直前に器の底と味を確認する。水がたまらず、レモンの酸味が感じられればよい。
+2. 和えて5分後に数本を食べ比べる。硬さが均一で、軽い歯ごたえが残っていればよい。
+
+=== 注意事項 ===
+${notice}`;
+
+function cleanLine(line) {
+  return line.trim().replace(/\*\*([^*]+)\*\*/g, '$1').replace(/\\+$/, '').trim();
+}
+
+function parse(text) {
+  const groups = new Map();
+  const preamble = [];
+  let current = preamble;
+  for (const raw of text.split(/\r\n?|\n/)) {
+    if (/^\s*```[\w-]*\s*$/.test(raw)) continue;
+    const line = cleanLine(raw);
+    if (!line) continue;
+    const heading = line.replace(/^#{1,6}\s+/, '').replace(/^={2,}|={2,}$/g, '').trim();
+    const key = aliases.get(heading);
+    if (key) {
+      if (!groups.has(key)) groups.set(key, []);
+      current = groups.get(key);
+    } else {
+      current.push(line);
+    }
+  }
+  return {groups, preamble};
+}
+
+function add(parent, tag, text, className) {
+  const node = document.createElement(tag);
+  if (text) node.textContent = text;
+  if (className) node.className = className;
+  parent.append(node);
+  return node;
+}
+
+function ingredients(parent, lines) {
+  let table;
+  for (const line of lines) {
+    const item = line.match(/^(?:[・●*-]\s*)?([^：:]+)[：:]\s*(.+)$/);
+    if (item) {
+      if (!table) {
+        const header = add(add(add(parent, 'table'), 'thead'), 'tr');
+        add(header, 'th', '材料');
+        add(header, 'th', '分量');
+        table = add(header.closest('table'), 'tbody');
+      }
+      const row = add(table, 'tr');
+      add(row, 'td', item[1].trim());
+      add(row, 'td', item[2]);
+    } else {
+      table = null;
+      if (/^【[^】]*(人前|人分|名分)】$/.test(line)) {
+        add(parent, 'p', line, 'servings');
+      } else {
+        add(parent, 'h4', line.replace(/^【(.+)】$/, '$1').replace(/^#{1,6}\s+/, ''));
+      }
+    }
+  }
+}
+
+function prose(parent, lines, method) {
+  let list;
+  for (const line of lines) {
+    const numbered = line.match(/^([0-9０-９]+)[.．)）]\s*(.+)$/);
+    const bullet = line.match(/^(?:[・●]|[-*]\s+)\s*(.+)$/);
+    if (numbered || bullet) {
+      const kind = numbered ? 'OL' : 'UL';
+      if (list?.tagName !== kind) list = add(parent, kind.toLowerCase());
+      const item = add(list, 'li', numbered ? numbered[2] : bullet[1]);
+      if (numbered) item.value = Number(numbered[1].normalize('NFKC'));
+    } else {
+      list = null;
+      add(parent, method && /^【[0-9０-９]+】/.test(line) ? 'h4' : 'p', line);
+    }
+  }
+}
+
+function render() {
+  const text = el('recipe').value.trim();
+  const sheet = el('sheet');
+  sheet.replaceChildren();
+  sheet.hidden = !text;
+  el('empty').hidden = Boolean(text);
+  el('print').disabled = !text;
+  el('sample').disabled = Boolean(text);
+  el('status').textContent = '';
+  document.title = 'EDICODE｜検証用レシピシート';
+  if (!text) return;
+
+  const {groups, preamble} = parse(text);
+  const inlineTitle = preamble[0]?.match(/^料理名[：:]\s*(.+)$/);
+  if (inlineTitle) preamble.shift();
+  const title = el('dish').value.trim() || groups.get('料理名')?.join(' ') || inlineTitle?.[1];
+  if (title) document.title = `${title}｜検証用レシピシート`;
+  const head = add(sheet, 'header', '', 'sheet-head');
+  add(head, 'p', title ? 'EDICODE / 検証用レシピシート' : 'EDICODE', 'mark');
+  add(head, 'h2', title || '検証用レシピシート');
+  const author = el('author').value.trim();
+  const date = el('date').value;
+  const meta = [author && `記入者　${author}`, date && `試作日　${date.replaceAll('-', '/')}`].filter(Boolean);
+  if (meta.length) add(head, 'p', meta.join('　｜　'), 'meta');
+
+  prose(sheet, preamble, false);
+  for (const [index, name] of sections.entries()) {
+    const lines = groups.get(name) || [];
+    if (!lines.length && index !== 4) continue;
+    const section = add(sheet, 'section', '', index === 4 ? 'recipe-section notice' : 'recipe-section');
+    add(section, 'h3', name);
+    if (index === 0) ingredients(section, lines);
+    else prose(section, lines.length ? lines : [notice], index === 1);
+  }
+  const missing = sections.slice(0, 4).filter(name => !groups.get(name)?.length);
+  if (missing.length) el('status').textContent = `見出しや本文を確認してください（${missing.join('、')}）。`;
+}
+
+for (const id of ['recipe', 'dish', 'author', 'date']) el(id).addEventListener('input', render);
+el('sample').addEventListener('click', () => {
+  el('recipe').value = sample;
+  render();
+});
+el('print').addEventListener('click', () => window.print());
+render();
+</script>
+</body>
+</html>
