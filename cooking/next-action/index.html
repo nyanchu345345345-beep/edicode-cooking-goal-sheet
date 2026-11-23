@@ -401,10 +401,7 @@
             }
 
             #online-controls {
-                width: calc(100vw - 20px) !important;
-                max-width: calc(100vw - 20px) !important;
-                padding: 14px !important;
-                box-sizing: border-box !important;
+                width: 100%;
             }
 
             /* フォーム上部ヘッダー：スマホでは料理名をEDICODEの下に自然に配置 */
@@ -692,7 +689,7 @@
     </div>
 
     <!-- OUTPUT SCREEN -->
-    <div id="output-screen" class="hidden pb-24">
+    <div id="output-screen" class="hidden pb-36">
         <div class="container mx-auto px-4 py-8 no-print flex flex-col gap-6 max-w-[210mm]">
             <div class="flex justify-between items-center">
                 <button id="backBtn" class="text-sm font-black flex items-center gap-2 text-gray-400 hover:text-[#182349]">
@@ -703,27 +700,12 @@
                 </button>
             </div>
 
-            <div id="online-controls" class="hidden bg-white p-6 rounded-3xl shadow-lg border border-[#eee0d5] flex flex-col md:flex-row items-center gap-6">
-                <div class="flex flex-wrap items-center gap-3 flex-1">
-                    <button id="export-draft-btn" type="button" class="min-h-[44px] rounded-xl bg-[#cb563e] px-4 py-2 text-sm font-bold text-white">下書きファイルを保存</button>
-                    <div class="flex flex-col">
-                        <button id="overwrite-save-btn" class="bg-[#cb563e] text-white px-6 py-3 rounded-xl text-sm font-black hover:bg-[#b94b36] transition">💾 上書き保存</button>
-                        <span class="text-[9px] text-gray-400 font-bold mt-1 text-center">現在の内容を更新</span>
-                    </div>
-                    <div class="flex flex-col">
-                        <button id="save-as-btn" class="bg-white border-2 border-[#cb563e] text-[#182349] px-6 py-3 rounded-xl text-sm font-black hover:bg-[#fff7f2] transition">📋 別名で保存</button>
-                        <span class="text-[9px] text-gray-400 font-bold mt-1 text-center">新しくコピー保存</span>
-                    </div>
-                    <div class="flex flex-col">
-                        <button id="rename-save-btn" class="bg-[#f8f3ef] border border-gray-200 text-[#182349] px-4 py-3 rounded-xl text-sm font-black hover:bg-[#fff7f2] transition">✏️ 保存名変更</button>
-                        <span class="text-[9px] text-gray-400 font-bold mt-1 text-center">名前だけ変更</span>
-                    </div>
-                </div>
-                <div class="flex flex-col items-end gap-1 border-l pl-6 border-gray-100 min-w-[200px]">
-                    <div class="text-[10px] text-gray-400 font-black tracking-widest">現在の保存名</div>
-                    <div id="display-draft-name" class="text-xs font-black text-[#182349] max-w-[200px] truncate">未保存</div>
-                    <div id="save-status-text" class="text-[10px] font-bold text-[#182349] mt-1">未保存</div>
-                </div>
+        </div>
+
+        <div id="online-controls" class="hidden fixed inset-x-0 bottom-0 z-50 border-t border-[#eee0d5] bg-white no-print">
+            <div class="mx-auto max-w-lg px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 text-center">
+                <button id="export-draft-btn" type="button" class="min-h-[44px] w-full rounded-xl border-2 border-[#182349] bg-white px-4 py-2 font-bold text-[#182349]">下書きファイルを保存</button>
+                <p id="save-status-text" role="status" class="mt-1 text-xs text-[#182349]"></p>
             </div>
         </div>
 
@@ -745,19 +727,14 @@
         </div>
     </div>
 
-    <div id="save-name-modal" class="modal-overlay">
-        <div class="modal-content max-w-[450px] p-8 space-y-6">
-            <h2 id="save-modal-title" class="text-lg font-black text-[#182349]">保存名の入力</h2>
-            <div>
-                <label class="block text-[10px] font-black text-gray-400 uppercase mb-2">下書きの名前</label>
-                <input type="text" id="new-draft-name-input" class="w-full border-2 border-gray-100 p-4 rounded-xl focus:border-[#cb563e] outline-none font-bold text-sm">
-            </div>
-            <div class="flex gap-3">
-                <button onclick="closeModal('save-name-modal')" class="flex-1 bg-[#fdfaf8] text-gray-500 py-4 rounded-xl font-black text-sm">キャンセル</button>
-                <button id="confirm-save-btn" type="button" class="flex-1 bg-[#cb563e] text-white py-4 rounded-xl font-black text-sm">保存する</button>
-            </div>
+    <dialog id="resume-prompt" aria-labelledby="resume-title" class="mx-auto my-auto w-[calc(100%-2rem)] max-w-sm rounded-xl bg-white p-6 text-center text-[#182349] shadow-2xl backdrop:bg-black/50">
+        <h2 id="resume-title" class="mb-3 text-lg font-black">保存データがあります</h2>
+        <p class="mb-5 text-sm font-bold text-gray-600">前回の続きから再開しますか？</p>
+        <div class="flex flex-col gap-3">
+            <button id="resume-latest-btn" type="button" class="rounded-lg bg-[#182349] py-3 font-black text-white">再開する</button>
+            <button id="start-new-btn" type="button" class="rounded-lg bg-gray-100 py-3 font-bold">新しく始める</button>
         </div>
-    </div>
+    </dialog>
 
     <div id="pdf-save-modal" class="modal-overlay">
         <div class="modal-content max-w-[460px] p-8 space-y-5">
@@ -795,8 +772,7 @@
         const LOCAL_LIVE_SESSION_KEY = `edicode_next_action_${FORM_VARIANT}_live_session`;
 
         // --- グローバル状態 ---
-        let currentDraftId = null, currentDraftName = '', modalMode = 'as_new', mode = 'handwriting', currentData = null, currentUser = '', currentDate = '', currentRawText = '';
-        let saveTimer = null, localSnapshotTimer = null, liveSessionTimer = null;
+        let currentDraftId = null, currentDraftName = '', mode = 'handwriting', currentData = null, currentUser = '', currentDate = '', currentRawText = '';
         let previousInputValues = {};
         let latestPdfBlob = null;
         let latestPdfUrl = null;
@@ -829,13 +805,6 @@
             const modeLabel = mode === 'online' ? 'オンライン' : '手書き';
 
             return `【${datePart}_${userPart}】${dishPart}_NEXT ACTIONシート_${modeLabel}`;
-        }
-
-        function updateSaveStatus(isManual) {
-            const st = document.getElementById('save-status-text');
-            if (st) st.innerText = (isManual ? '最終保存：' : '自動保存済：') + new Date().toLocaleTimeString();
-            const disp = document.getElementById('display-draft-name');
-            if (disp) disp.innerText = currentDraftId ? currentDraftName : '未保存';
         }
 
         function isMobileDevice() {
@@ -962,63 +931,50 @@
             };
         }
 
-        function saveDraftToLocal(draftData) {
-            if (!draftData) return;
-            try {
-                const local = JSON.parse(localStorage.getItem(LOCAL_DRAFTS_KEY) || '{}');
-                local[draftData.draftId] = draftData;
-                localStorage.setItem(LOCAL_DRAFTS_KEY, JSON.stringify(local));
-            } catch (e) { throw new Error('下書きを保存できませんでした', { cause: e }); }
+        async function accessBrowserDraft(mode, action) {
+          const db = await new Promise((resolve, reject) => {
+            const request = indexedDB.open('edicode-next-action-draft', 1);
+            request.onupgradeneeded = () => request.result.createObjectStore('drafts');
+            request.onerror = () => reject(request.error);
+            request.onsuccess = () => resolve(request.result);
+          });
+          try {
+            return await new Promise((resolve, reject) => {
+              const tx = db.transaction('drafts', mode);
+              const request = action(tx.objectStore('drafts'));
+              tx.oncomplete = () => resolve(request.result);
+              tx.onabort = () => reject(tx.error);
+              tx.onerror = () => reject(tx.error);
+            });
+          } finally {
+            db.close();
+          }
         }
 
-        async function saveDraft(isManual, options = {}) {
-            if (!currentData) return;
-            if (mode !== 'online') return;
-
-            const skipNameModal = options.skipNameModal === true;
-            if (isManual && !currentDraftId && !skipNameModal) { openSaveModal('as_new'); return; }
-            
-            // 自動保存のガード: IDがない場合は自動保存しない
-            if (!isManual && !currentDraftId) return;
-
-            const draftData = buildDraftData();
-            if (!currentDraftId) currentDraftId = draftData.draftId;
-            if (!currentDraftName) currentDraftName = draftData.draftName;
-
-            try {
-                saveDraftToLocal(draftData);
-                updateSaveStatus(isManual);
-                if (isManual) {
-                    showToast('保存しました');
-                    updateDraftResumeButtonVisibility();
-                }
-            } catch (e) { 
-                console.error(e);
-                if (isManual) showToast('保存に失敗しました'); 
-            }
-        }
+        let pendingBrowserWrite = Promise.resolve();
+        let saveRevision = 0;
 
         function saveLiveSession() {
-            if (!currentData) return;
-            try {
-                const liveData = buildDraftData();
-                if (liveData) {
-                    localStorage.setItem(LOCAL_LIVE_SESSION_KEY, JSON.stringify(liveData));
-                }
-            } catch (e) { console.warn('Live session save skipped:', e); }
+            if (mode !== 'online') return;
+            const draft = buildDraftData();
+            if (!draft) return;
+            const revision = ++saveRevision;
+            const status = document.getElementById('save-status-text');
+            status.textContent = '保存中…';
+            pendingBrowserWrite = pendingBrowserWrite.catch(() => {}).then(() =>
+                accessBrowserDraft('readwrite', store => store.put(draft, '/'))
+            );
+            pendingBrowserWrite.then(() => {
+                if (revision === saveRevision) status.textContent = 'このブラウザに保存済み';
+            }).catch(() => {
+                if (revision === saveRevision) status.textContent = '自動保存できません。下書きファイルを保存してください。';
+            });
+            return pendingBrowserWrite;
         }
 
-        function scheduleSafeAutoSave() {
-            if (!currentData || mode !== 'online') return;
-
-            if (liveSessionTimer) clearTimeout(liveSessionTimer);
-            liveSessionTimer = setTimeout(() => saveLiveSession(), 200);
-
-            // currentDraftIdがある場合のみ、本番下書きへの自動保存を行う
-            if (currentDraftId) {
-                if (saveTimer) clearTimeout(saveTimer);
-                saveTimer = setTimeout(() => saveDraft(false), 2500);
-            }
+        async function readLatestDraft() {
+            await pendingBrowserWrite.catch(() => {});
+            return accessBrowserDraft('readonly', store => store.get('/'));
         }
 
         // --- リスト取得・表示ロジック ---
@@ -1027,19 +983,21 @@
             let l = [];
             const processedIds = new Set();
 
-            // 1. 現行の編集中データ
+            const addLive = (live, id, name) => {
+                if (!live?.parsedData) return;
+                l.push({ ...live, draftId: id, draftName: name, isLiveSession: true });
+                if (live.draftId) processedIds.add(live.draftId);
+            };
+
             try {
-                const liveRaw = localStorage.getItem(LOCAL_LIVE_SESSION_KEY);
-                if (liveRaw) {
-                    const live = JSON.parse(liveRaw);
-                    if (live && live.parsedData) {
-                        const item = { ...live, draftId: '__live_session__', draftName: '前回の編集中データ（自動保存）', isLiveSession: true };
-                        l.push(item);
-                        // liveが持っていた本来のIDも記録
-                        if (live.draftId) processedIds.add(live.draftId);
-                    }
+                addLive(await readLatestDraft(), '__live_session__', '前回の編集中データ（自動保存）');
+            } catch {}
+            try {
+                const old = JSON.parse(localStorage.getItem(LOCAL_LIVE_SESSION_KEY) || 'null');
+                if (old && !processedIds.has(old.draftId)) {
+                    addLive(old, '__live_session__', '以前の編集中データ');
                 }
-            } catch (e) {}
+            } catch {}
 
             // 2. localStorage 下書き
             try {
@@ -1126,8 +1084,6 @@
 
         function resumeDraft(d) {
             if (!d || !d.parsedData) return;
-            clearTimeout(saveTimer);
-            clearTimeout(liveSessionTimer);
 
             const iv = { ...d.inputValues };
             previousInputValues = { ...iv };
@@ -1161,48 +1117,12 @@
                 const field = document.querySelector(`[data-save-key="${CSS.escape(key)}"]`);
                 if (field) field.value = value;
             });
-            updateSaveStatus(true);
             saveLiveSession();
 
             closeModal('draft-modal');
             showToast('データを復元しました');
         }
 
-
-        // --- モーダル・UI操作 ---
-
-        function openSaveModal(m) {
-            modalMode = m;
-            const title = document.getElementById('save-modal-title');
-            const input = document.getElementById('new-draft-name-input');
-            if (!title || !input) return;
-
-            if (m === 'rename') {
-                title.innerText = '保存名の変更';
-                input.value = currentDraftName || createDefaultDraftName();
-            } else {
-                title.innerText = m === 'as_new' ? '新しい名前で保存' : '下書きを保存する';
-                input.value = createDefaultDraftName();
-            }
-            document.getElementById('save-name-modal').style.display = 'flex';
-            setTimeout(() => input.focus(), 100);
-        }
-
-        async function confirmSaveAction() {
-            const input = document.getElementById('new-draft-name-input');
-            if (!input) return;
-            const newName = input.value.trim();
-            if (!newName) { showToast('保存名を入力してください。'); return; }
-            
-            if (modalMode === 'as_new') {
-                currentDraftId = 'draft_' + Date.now();
-            }
-            currentDraftName = newName;
-            closeModal('save-name-modal');
-            await saveDraft(true, { skipNameModal: true });
-            saveLiveSession();
-            updateDraftResumeButtonVisibility();
-        }
 
         async function updateDraftResumeButtonVisibility() {
             const btn = document.getElementById('open-draft-list-btn');
@@ -1490,8 +1410,6 @@
             updateCreateButton();
             parsedRecipe.dish = dish;
             previousInputValues = {};
-            clearTimeout(saveTimer);
-            clearTimeout(liveSessionTimer);
             currentDraftId = null;
             currentDraftName = '';
             mode = document.querySelector('input[name="usage-mode"]:checked').value;
@@ -1506,7 +1424,6 @@
             document.getElementById('online-controls').classList.toggle('hidden', mode !== 'online');
             
             saveLiveSession();
-            updateSaveStatus(false);
         }
 
         function updateCreateButton() {
@@ -1532,7 +1449,7 @@
         };
 
         document.getElementById('backBtn').onclick = () => {
-            safeFullSave();
+            if (mode === 'online') saveLiveSession();
             document.getElementById('output-screen').classList.add('hidden');
             document.getElementById('setup-screen').classList.remove('hidden');
             updateDraftResumeButtonVisibility();
@@ -1634,11 +1551,6 @@
             }
         };
 
-        document.getElementById('overwrite-save-btn').onclick = () => saveDraft(true);
-        document.getElementById('save-as-btn').onclick = () => openSaveModal('as_new');
-        document.getElementById('rename-save-btn').onclick = () => openSaveModal('rename');
-        document.getElementById('confirm-save-btn').onclick = confirmSaveAction;
-
         document.getElementById('open-draft-list-btn').onclick = () => loadDraftList() && (document.getElementById('draft-modal').style.display = 'flex');
 
         document.getElementById('share-pdf-btn').onclick = shareLatestPdf;
@@ -1658,22 +1570,25 @@
             updateDraftResumeButtonVisibility();
         };
         
-        document.addEventListener('input', e => {
-            if (e.target.matches('[data-save-key]')) scheduleSafeAutoSave();
+        document.addEventListener('input', event => {
+            if (event.target.matches('[data-save-key]')) saveLiveSession();
         });
 
-        document.addEventListener('change', e => {
-            if (e.target.matches('[data-save-key]')) scheduleSafeAutoSave();
-        });
+        const resumePrompt = document.getElementById('resume-prompt');
+        async function offerLatestDraft() {
+            const drafts = await fetchDraftListArray();
+            if (drafts.length) document.getElementById('open-draft-list-btn').classList.remove('hidden');
+            const latest = drafts[0];
+            if (!latest || currentData) return;
+            document.getElementById('resume-latest-btn').onclick = () => {
+                resumePrompt.close();
+                resumeDraft(latest);
+            };
+            resumePrompt.showModal();
+        }
 
-        const safeFullSave = () => { saveLiveSession(); if(currentDraftId) saveDraft(false); };
-        window.addEventListener('beforeunload', safeFullSave);
-        window.addEventListener('pagehide', safeFullSave);
-        document.addEventListener('visibilitychange', () => document.visibilityState === 'hidden' && safeFullSave());
-
-        // --- 起動処理 ---
-
-        updateDraftResumeButtonVisibility();
+        document.getElementById('start-new-btn').onclick = () => resumePrompt.close();
+        offerLatestDraft();
         window.closeModal = closeModal;
     </script>
 </body>
