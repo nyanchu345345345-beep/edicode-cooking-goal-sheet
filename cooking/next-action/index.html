@@ -178,24 +178,8 @@
 
 
 
-            #setup-screen label:has(input[name=\"usage-mode\"]) {
-                padding: 16px 8px !important;
-                min-width: 0 !important;
-                box-sizing: border-box !important;
-            }
 
-            #setup-screen label:has(input[name=\"usage-mode\"]) input {
-                width: 18px !important;
-                height: 18px !important;
-                margin-bottom: 8px !important;
-            }
 
-            #setup-screen label:has(input[name=\"usage-mode\"]) span {
-                font-size: 0.78rem !important;
-                line-height: 1.15 !important;
-                white-space: nowrap !important;
-                letter-spacing: -0.04em !important;
-            }
 
             #setup-screen .border-dashed {
                 padding: 28px 12px !important;
@@ -653,37 +637,6 @@
                     <button id="open-draft-list-btn" type="button" class="mt-4 hidden min-h-[44px] w-full rounded-xl border border-[#9caecb] bg-white font-bold text-[#182349]">このブラウザの下書きを開く</button>
                 </section>
 
-                <details class="border-t border-gray-200 pt-4">
-                    <summary class="cursor-pointer text-sm font-bold text-[#182349]">作成オプション</summary>
-                    <div class="mt-4 space-y-4">
-                <div>
-                    <label class="block text-xs font-black text-gray-500 mb-2 uppercase tracking-widest">使用モードを選択</label>
-                    <div class="grid grid-cols-2 gap-4">
-                        <label class="flex flex-col items-center p-5 border-2 border-[#f3e9e1] rounded-2xl cursor-pointer hover:bg-[#fffaf7]">
-                            <input type="radio" name="usage-mode" value="handwriting" class="mb-3 w-5 h-5 accent-[#cb563e]">
-                            <span class="font-black">手書きで使用</span>
-                        </label>
-                        <label class="flex flex-col items-center p-5 border-2 border-[#f3e9e1] rounded-2xl cursor-pointer hover:bg-[#fffaf7]">
-                            <input type="radio" name="usage-mode" value="online" checked class="mb-3 w-5 h-5 accent-[#cb563e]">
-                            <span class="font-black">ブラウザで入力</span>
-                        </label>
-                    </div>
-                </div>
-
-                <div>
-                    <label class="block text-xs font-black text-gray-500 mb-2 uppercase tracking-widest">検証用レシピ（TXT・任意）</label>
-                    <div class="border-2 border-dashed border-[#eee0d5] rounded-2xl p-8 text-center hover:border-[#cb563e] bg-[#fdfaf8]">
-                        <input type="file" id="input-file" accept=".txt" class="hidden">
-                        <label for="input-file" class="cursor-pointer block">
-                            <div class="text-2xl mb-2">📄</div>
-                            <div class="text-sm font-bold text-gray-600">TXTファイルを選ぶ</div>
-                            <div id="file-display" class="mt-4 text-xs font-black text-[#182349] hidden"></div>
-                        </label>
-                    </div>
-                </div>
-
-                    </div>
-                </details>
             </div>
         </div>
     </div>
@@ -1157,30 +1110,6 @@
 
         const priorityTitle = 'レシピ設計において、特に重視した点';
 
-        function readTextSections(text) {
-            const sections = new Map();
-            const headings = [...text.matchAll(/^[ \t]*===[ \t]*(.+?)[ \t]*===[ \t]*(?=\r?$)/gm)];
-            headings.forEach((heading, index) => {
-                const end = headings[index + 1]?.index ?? text.length;
-                sections.set(heading[1].trim(), text.slice(heading.index + heading[0].length, end).trim());
-            });
-            return sections;
-        }
-
-        function readRecipe(text) {
-            const sections = readTextSections(text);
-            const recipe = ['レシピ情報', '材料', '調理方法', '注意事項'].flatMap(title =>
-                sections.get(title) ? [[title, sections.get(title)]] : []
-            );
-            const dish = sections.get('料理名') || '';
-            if (!dish && !recipe.length) throw new Error('料理名・材料・調理方法などが入った検証用レシピTXTを選んでください。');
-            return {
-                dish,
-                priorities: sections.get(priorityTitle) || sections.get('レシピ設計において特に重視した点') || sections.get('素案レシピからの主な修正点') || '',
-                recipe
-            };
-        }
-
         function renderInput(min, key, placeholder = "...") {
             if (mode === 'online') return `<textarea id="field-${key}" class="box-input" data-save-key="${key}" style="min-height:${min}px" placeholder="${placeholder}"></textarea>`;
             return `<div class="handwriting-box" style="min-height:${min}px"></div>`;
@@ -1397,10 +1326,9 @@
 
         // --- イベントハンドラ ---
 
-        function startSheet(text) {
+        function startSheet() {
             const nameInput = document.getElementById('manual-dish');
-            const parsedRecipe = text === null ? {} : readRecipe(text);
-            const dish = nameInput.value.trim() || parsedRecipe.dish;
+            const dish = nameInput.value.trim();
             if (!dish) {
                 nameInput.value = '';
                 nameInput.reportValidity();
@@ -1408,13 +1336,12 @@
             }
             nameInput.value = dish;
             updateCreateButton();
-            parsedRecipe.dish = dish;
             previousInputValues = {};
             currentDraftId = null;
             currentDraftName = '';
-            mode = document.querySelector('input[name="usage-mode"]:checked').value;
-            currentRawText = text ?? '';
-            currentData = parsedRecipe;
+            mode = 'online';
+            currentRawText = '';
+            currentData = { dish };
             currentUser = document.getElementById('manual-username').value || '未設定';
             currentDate = new Date().toLocaleDateString('sv-SE');
             
@@ -1434,19 +1361,7 @@
         }
 
         document.getElementById('manual-dish').addEventListener('input', updateCreateButton);
-        document.getElementById('createBtn').onclick = async () => {
-            const file = document.getElementById('input-file').files[0];
-            const button = document.getElementById('createBtn');
-            button.disabled = true;
-            button.textContent = 'ファイルを読み込み中…';
-            try {
-                startSheet(file ? await file.text() : null);
-            } catch (error) {
-                showToast(error.message || 'ファイルを読み込めませんでした。');
-            } finally {
-                updateCreateButton();
-            }
-        };
+        document.getElementById('createBtn').onclick = startSheet;
 
         document.getElementById('backBtn').onclick = () => {
             if (mode === 'online') saveLiveSession();
@@ -1471,24 +1386,6 @@
                 openPdfSaveModal(b, fileName);
             } else {
                 triggerDirectPdfDownload(b, fileName);
-            }
-        };
-
-        document.getElementById('input-file').onchange = async function() {
-            const file = this.files[0];
-            const display = document.getElementById('file-display');
-            display.textContent = file ? '選択中: ' + file.name : '';
-            display.classList.toggle('hidden', !file);
-            if (!file) return;
-            try {
-                const recipe = readRecipe(await file.text());
-                const name = document.getElementById('manual-dish');
-                if (this.files[0] === file && !name.value.trim() && recipe.dish) {
-                    name.value = recipe.dish;
-                    updateCreateButton();
-                }
-            } catch (error) {
-                showToast(error.message);
             }
         };
 
