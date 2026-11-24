@@ -1346,10 +1346,15 @@
                     if (pages.length === 1 && isDishPhoto(currentData.photo)) {
                         const photo = document.createElement('img');
                         photo.alt = '料理の写真';
-                        photo.style.cssText = 'display:block;width:100%;height:240px;object-fit:contain;margin-bottom:20px;';
                         photo.src = currentData.photo;
                         try {
                             await photo.decode();
+                            // Set proportional dimensions explicitly for both PDF rasterizers.
+                            const availableWidth = currentPageBody.clientWidth;
+                            const scale = Math.min(1, availableWidth / photo.naturalWidth, 240 / photo.naturalHeight);
+                            photo.style.cssText = 'display:block;margin:0 auto 20px;';
+                            photo.style.width = (photo.naturalWidth * scale) + 'px';
+                            photo.style.height = (photo.naturalHeight * scale) + 'px';
                             currentPageBody.appendChild(photo);
                         } catch (error) {
                             console.warn('Draft photo is unreadable', error);
