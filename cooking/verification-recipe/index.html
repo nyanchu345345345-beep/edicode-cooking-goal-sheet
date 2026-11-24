@@ -49,6 +49,9 @@ th{font-size:.88em;color:var(--muted)}
 th:last-child{width:34%}
 ol,ul{padding-left:1.65em;margin:.35em 0}
 .notice{font-size:.93em;color:var(--muted)}
+.checklist>li{margin-bottom:.65em}
+.checklist>li>strong{color:var(--navy)}
+.checklist ul{margin-top:.15em}
 @media(max-width:800px){.layout{grid-template-columns:minmax(0,1fr)}main{padding:20px 12px 35px}}
 @page{size:A4;margin:14mm 15mm}
 @media print{
@@ -57,7 +60,8 @@ ol,ul{padding-left:1.65em;margin:.35em 0}
   main,.layout,.preview,.sheet{display:block;margin:0;padding:0;max-width:none;border:0}
   .sheet{font-size:10pt;line-height:1.55;print-color-adjust:exact;-webkit-print-color-adjust:exact}
   .sheet-head,tr{break-inside:avoid}
-  h3,h4,.servings{break-after:avoid}
+  h3,h4,.servings,.checklist>li>strong{break-after:avoid}
+  .checklist>li{break-inside:avoid}
   p,li{orphans:2;widows:2}
   thead{display:table-header-group}
 }
@@ -98,11 +102,13 @@ ol,ul{padding-left:1.65em;margin:.35em 0}
 <script>
 const el = id => document.getElementById(id);
 const sections = ['材料', '調理方法', '調理前に思考した仮説・懸念点', '味見・検証ポイント', '注意事項'];
+const optionalSections = ['レシピ設計において、特に重視した点', '参考レシピ'];
 const aliases = new Map([
-  ...sections.map(name => [name, name]),
+  ...[...sections, ...optionalSections, 'レシピ情報'].map(name => [name, name]),
   ['調理前の仮説・懸念点', sections[2]],
   ['料理名', '料理名']
 ]);
+const importedFields = new Map();
 const notice = 'このレシピは試作・分析・改善のための検証用です。温度・時間・分量は試作時の目安です。食材や調理環境に応じて、仕上がりを確認しながら調整してください。';
 const sample = `=== 料理名 ===
 にんじんのレモンサラダ
@@ -188,7 +194,7 @@ function ingredients(parent, lines) {
       if (/^【[^】]*(人前|人分|名分)】$/.test(line)) {
         add(parent, 'p', line, 'servings');
       } else {
-        add(parent, 'h4', line.replace(/^【(.+)】$/, '$1').replace(/^#{1,6}\s+/, ''));
+        add(parent, 'h4', line.replace(/^【(.+)】$/, '$1').replace(/^(?:#{1,6}\s+|■\s*)/, ''));
       }
     }
   }
@@ -211,8 +217,49 @@ function prose(parent, lines, method) {
   }
 }
 
-function render() {
+function checklist(parent, lines) {
+  const entries = [];
+  for (const line of lines) {
+    const numbered = line.match(/^([0-9０-９]+)[.．)）]\s*(.+)$/);
+    if (numbered) {
+      entries.push({number: Number(numbered[1].normalize('NFKC')), title: numbered[2], details: []});
+    } else if (entries.length) {
+      entries.at(-1).details.push(line);
+    } else {
+      prose(parent, [line], false);
+    }
+  }
+  if (!entries.length) return;
+  const list = add(parent, 'ol', '', 'checklist');
+  for (const {number, title, details} of entries) {
+    const item = add(list, 'li');
+    item.value = number;
+    add(item, details.length ? 'strong' : 'span', title);
+    prose(item, details, false);
+  }
+}
+
+function importField(id, value) {
+  const field = el(id);
+  if (field.value.trim() && field.value !== importedFields.get(id)) return;
+  field.value = value || '';
+  importedFields.set(id, field.value);
+}
+
+function render(importMetadata = false) {
   const text = el('recipe').value.trim();
+  const {groups, preamble} = parse(text);
+  const inlineTitle = preamble[0]?.match(/^料理名[：:]\s*(.+)$/);
+  if (inlineTitle) preamble.shift();
+  const parsedTitle = groups.get('料理名')?.join(' ') || inlineTitle?.[1];
+  const info = groups.get('レシピ情報') || [];
+  const infoValue = label => info.map(line => line.match(label)?.[1]?.trim()).find(Boolean);
+  const parsedAuthor = infoValue(/^(?:[・●*-]\s*)?(?:記入者名|記入者)\s*[：:]\s*(.+)$/);
+  const servings = infoValue(/^(?:[・●*-]\s*)?人数\s*[：:]\s*(.+)$/);
+  if (importMetadata) {
+    importField('dish', parsedTitle);
+    importField('author', parsedAuthor);
+  }
   const sheet = el('sheet');
   sheet.replaceChildren();
   sheet.hidden = !text;
@@ -227,10 +274,7 @@ function render() {
   document.title = 'EDICODE｜検証用レシピシート';
   if (!text) return;
 
-  const {groups, preamble} = parse(text);
-  const inlineTitle = preamble[0]?.match(/^料理名[：:]\s*(.+)$/);
-  if (inlineTitle) preamble.shift();
-  const title = dish || groups.get('料理名')?.join(' ') || inlineTitle?.[1];
+  const title = dish || parsedTitle;
   if (title) document.title = `${title}｜検証用レシピシート`;
   const head = add(sheet, 'header', '', 'sheet-head');
   add(head, 'p', title ? 'EDICODE / 検証用レシピシート' : 'EDICODE', 'mark');
@@ -238,22 +282,36 @@ function render() {
   if (author) add(head, 'p', `記入者　${author}`, 'meta');
 
   prose(sheet, preamble, false);
-  for (const [index, name] of sections.entries()) {
-    const lines = groups.get(name) || [];
-    if (!lines.length && index !== 4) continue;
-    const section = add(sheet, 'section', '', index === 4 ? 'recipe-section notice' : 'recipe-section');
+  for (const name of [...optionalSections, ...sections]) {
+    let lines = groups.get(name) || [];
+    if (!lines.length && name !== '注意事項') continue;
+    const section = add(sheet, 'section', '', name === '注意事項' ? 'recipe-section notice' : 'recipe-section');
     add(section, 'h3', name);
-    if (index === 0) ingredients(section, lines);
-    else prose(section, lines.length ? lines : [notice], index === 1);
+    if (name === '材料') {
+      if (servings && !lines.some(line => /^【[^】]*(人前|人分|名分)】$/.test(line))) {
+        lines = [servings.startsWith('【') ? servings : `【${servings}】`, ...lines];
+      }
+      ingredients(section, lines);
+    } else if (name === sections[2] || name === sections[3]) {
+      checklist(section, lines);
+    } else {
+      prose(section, lines.length ? lines : [notice], name === '調理方法');
+    }
   }
   const missing = sections.slice(0, 4).filter(name => !groups.get(name)?.length);
   if (missing.length) el('status').textContent = `見出しや本文を確認してください（${missing.join('、')}）。`;
 }
 
-for (const id of ['recipe', 'dish', 'author']) el(id).addEventListener('input', render);
+el('recipe').addEventListener('input', () => render(true));
+for (const id of ['dish', 'author']) {
+  el(id).addEventListener('input', () => {
+    importedFields.delete(id);
+    render();
+  });
+}
 el('sample').addEventListener('click', () => {
   el('recipe').value = sample;
-  render();
+  render(true);
 });
 el('print').addEventListener('click', () => window.print());
 render();
