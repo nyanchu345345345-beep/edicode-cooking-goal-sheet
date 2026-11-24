@@ -18,7 +18,6 @@ h1{font-size:clamp(1.45rem,4vw,2rem);color:var(--navy)}
 .editor,.preview{background:white;border:1px solid var(--line);border-radius:14px;min-width:0}
 .editor{padding:20px}
 .fields{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.fields label:first-child{grid-column:1/-1}
 label{display:block;font-weight:700;font-size:.9rem;min-width:0}
 input,textarea,button{font:inherit}
 input,textarea{display:block;width:100%;min-width:0;background:#f9fbfd;border:1px solid #b9c5d6;border-radius:8px;color:var(--ink);padding:9px 11px}
@@ -74,9 +73,8 @@ ol,ul{padding-left:1.65em;margin:.35em 0}
   <div class="layout">
     <section class="editor no-print" aria-label="レシピ入力">
       <div class="fields">
-        <label>料理名（任意）<input id="dish" placeholder="例：にんじんのレモンサラダ"></label>
-        <label>記入者名（任意）<input id="author" autocomplete="name"></label>
-        <label>試作日（任意）<input id="date" type="date"></label>
+        <label>料理名（必須）<input id="dish" required placeholder="例：にんじんのレモンサラダ"></label>
+        <label>記入者名（必須）<input id="author" required autocomplete="name"></label>
       </div>
       <div class="toolbar">
         <label for="recipe">レシピ本文</label>
@@ -85,6 +83,7 @@ ol,ul{padding-left:1.65em;margin:.35em 0}
       <textarea id="recipe" spellcheck="false" aria-describedby="hint" placeholder="=== 材料 ===&#10;【2人前】&#10;【サラダ】&#10;・にんじん：150 g&#10;…"></textarea>
       <p class="help" id="hint">「=== 材料 ===」などの見出しを含めて貼り付けてください。</p>
       <p class="status" id="status" aria-live="polite"></p>
+      <p class="status" id="required-status" aria-live="polite"></p>
     </section>
     <section class="preview" aria-label="出力プレビュー">
       <div class="preview-bar no-print">
@@ -218,7 +217,11 @@ function render() {
   sheet.replaceChildren();
   sheet.hidden = !text;
   el('empty').hidden = Boolean(text);
-  el('print').disabled = !text;
+  const dish = el('dish').value.trim();
+  const author = el('author').value.trim();
+  el('print').disabled = !text || !dish || !author;
+  el('required-status').textContent = text && (!dish || !author)
+    ? 'PDFを保存するには、料理名と記入者名を入力してください。' : '';
   el('sample').disabled = Boolean(text);
   el('status').textContent = '';
   document.title = 'EDICODE｜検証用レシピシート';
@@ -227,15 +230,12 @@ function render() {
   const {groups, preamble} = parse(text);
   const inlineTitle = preamble[0]?.match(/^料理名[：:]\s*(.+)$/);
   if (inlineTitle) preamble.shift();
-  const title = el('dish').value.trim() || groups.get('料理名')?.join(' ') || inlineTitle?.[1];
+  const title = dish || groups.get('料理名')?.join(' ') || inlineTitle?.[1];
   if (title) document.title = `${title}｜検証用レシピシート`;
   const head = add(sheet, 'header', '', 'sheet-head');
   add(head, 'p', title ? 'EDICODE / 検証用レシピシート' : 'EDICODE', 'mark');
   add(head, 'h2', title || '検証用レシピシート');
-  const author = el('author').value.trim();
-  const date = el('date').value;
-  const meta = [author && `記入者　${author}`, date && `試作日　${date.replaceAll('-', '/')}`].filter(Boolean);
-  if (meta.length) add(head, 'p', meta.join('　｜　'), 'meta');
+  if (author) add(head, 'p', `記入者　${author}`, 'meta');
 
   prose(sheet, preamble, false);
   for (const [index, name] of sections.entries()) {
@@ -250,7 +250,7 @@ function render() {
   if (missing.length) el('status').textContent = `見出しや本文を確認してください（${missing.join('、')}）。`;
 }
 
-for (const id of ['recipe', 'dish', 'author', 'date']) el(id).addEventListener('input', render);
+for (const id of ['recipe', 'dish', 'author']) el(id).addEventListener('input', render);
 el('sample').addEventListener('click', () => {
   el('recipe').value = sample;
   render();
