@@ -275,7 +275,7 @@ function render(importMetadata = false) {
   if (!text) return;
 
   const title = dish || parsedTitle;
-  if (title) document.title = `${title}｜検証用レシピシート`;
+  if (dish && author) document.title = `【${author}】${dish}_検証用レシピシート`;
   const head = add(sheet, 'header', '', 'sheet-head');
   add(head, 'p', title ? 'EDICODE / 検証用レシピシート' : 'EDICODE', 'mark');
   add(head, 'h2', title || '検証用レシピシート');
