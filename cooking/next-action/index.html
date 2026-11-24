@@ -752,12 +752,10 @@
         }
 
         function createPdfFileName() {
-            const datePart = formatDateForSaveName(currentDate);
             const userPart = sanitizeSaveNamePart(currentUser, '入力者未設定');
             const dishPart = sanitizeSaveNamePart(currentData?.dish, '料理名未設定');
-            const modeLabel = mode === 'online' ? 'オンライン' : '手書き';
 
-            return `【${datePart}_${userPart}】${dishPart}_NEXT ACTIONシート_${modeLabel}`;
+            return `【${userPart}】${dishPart}_NEXT ACTIONシート`;
         }
 
         function isMobileDevice() {
