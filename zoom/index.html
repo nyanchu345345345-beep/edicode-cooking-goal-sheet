@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <meta name="robots" content="noindex, nofollow">
+  <title>EDICODE｜Zoom個別セッション予約</title>
+  <script>
+    const code = window.location.hash.slice(1);
+    if (/^[a-f0-9]{64}$/.test(code)) {
+      const booking = new URL('https://script.google.com/macros/s/AKfycbwRsixfQXggSIo4-CN7gcPmhDE8540yK7C-SDArtrrwc34zz3QaQ4OkjEihlqEehtqlxQ/exec');
+      booking.searchParams.set('invite', code);
+      window.location.replace(booking.href);
+    }
+  </script>
+</head>
+<body>
+  <main>
+    <h1>EDICODE｜Zoom個別セッション予約</h1>
+    <p>対象の受講者にお送りした招待リンクからお申し込みください。</p>
+  </main>
+</body>
+</html>
